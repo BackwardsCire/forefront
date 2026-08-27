@@ -68,7 +68,12 @@
       dataset: { cardId: card.id },
       tabindex: '0',
       onkeydown: function (e) {
-        if (e.key === 'Enter' && !e.altKey) { e.preventDefault(); actions.edit(card.id); }
+        if (e.key !== 'Enter' || e.altKey) return;
+        // The Done button is inside this item, so its Enter arrives here too.
+        // Claiming it would cancel the button and open Edit instead.
+        if (e.target !== e.currentTarget) return;
+        e.preventDefault();
+        actions.edit(card.id);
       },
       ondblclick: function () { actions.edit(card.id); }
     }, [

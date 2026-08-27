@@ -893,6 +893,7 @@ report('Storage failure is never hidden', runPage(example, `
   // Make writes fail the way a full or blocked storage would.
   const realSet = Storage.prototype.setItem;
   Storage.prototype.setItem = function () { const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e; };
+  const before = data().cards.length;
   key(document.body, 'n');
   const input = await until(() => document.querySelector('.capture__input'));
   input.value = 'this cannot be saved';
@@ -902,7 +903,32 @@ report('Storage failure is never hidden', runPage(example, `
   ok('the message says it was not saved', /not saved|full/i.test(text('.banner__text') || ''));
   ok('the capture dialog stays open with the text still in it',
      !!document.querySelector('.capture__input') && document.querySelector('.capture__input').value === 'this cannot be saved');
+
+  // The dialog holding the text is only honest if the dataset is not also
+  // holding a copy. If the card lingered in memory, the retry below would add
+  // a second one, and whichever save finally worked would write both.
+  eq('the unsaved card is not left in the dataset', data().cards.length, before);
+  ok('nothing by that title is in memory', !data().cards.some(c => c.title === 'this cannot be saved'));
+
+  input.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await wait(200);
+  eq('retrying while storage is still broken adds nothing', data().cards.length, before);
+  ok('the dialog is still open with the text', document.querySelector('.capture__input').value === 'this cannot be saved');
+
+  // Ctrl+Enter is the other way in, and rolls back the same way.
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true }));
+  await wait(200);
+  eq('and neither does Ctrl+Enter', data().cards.length, before);
+
+  // Storage comes back. The text is still there to retry, and saves once.
   Storage.prototype.setItem = realSet;
+  input.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => !document.querySelector('.capture__input'), 'the capture box to close');
+  eq('once storage recovers the retry saves exactly one card', data().cards.length, before + 1);
+  eq('with no duplicate', data().cards.filter(c => c.title === 'this cannot be saved').length, 1);
+  ok('and the failure banner is gone', !document.querySelector('.banner--bad'));
+  ok('what reached storage matches what is on screen',
+     JSON.parse(localStorage.getItem('forefront.data.v1')).cards.filter(c => c.title === 'this cannot be saved').length === 1);
 `));
 
 report('Accessibility basics', runPage(example, `
@@ -926,6 +952,54 @@ report('Accessibility basics', runPage(example, `
   await wait(60);
   ok('escape closes the menu', !document.querySelector('.menu'));
   ok('focus returns to the button', document.activeElement.classList.contains('card__menu'));
+`));
+
+report('Enter belongs to whatever is focused', runPage(example, `
+  // A card is focusable and its buttons live inside it, so a button's keydown
+  // bubbles to the card. If the card handles it, preventDefault() cancels the
+  // button's own activation and Edit opens instead of the button firing.
+  //
+  // The click cannot be asserted directly here: a synthetic keydown never runs
+  // a default action, because untrusted events do not. What can be asserted is
+  // the thing that broke it -- whether the card swallowed the key.
+  // dispatchEvent() returns false when something called preventDefault().
+  key(document.body, 'b');
+  await until(() => document.querySelector('.board'), 'the board');
+
+  const card = document.querySelector('.card:not(.card--done)');
+  const doneButton = card.querySelector('.card__done');
+  doneButton.focus();
+  const doneLive = doneButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  await wait(60);
+  ok('Enter on a card Done button is not cancelled by the card', doneLive);
+  ok('and does not open the edit dialog', !document.querySelector('.edit__title'));
+
+  const menuButton = card.querySelector('.card__menu');
+  menuButton.focus();
+  const menuLive = menuButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  await wait(60);
+  ok('Enter on a card menu button is not cancelled either', menuLive);
+  ok('and does not open the edit dialog', !document.querySelector('.edit__title'));
+
+  // The card itself must still be the thing Enter edits.
+  card.focus();
+  const cardLive = card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  const titleField = await until(() => document.querySelector('.edit__title'), 'the edit dialog');
+  ok('Enter on the card itself still opens Edit', !!titleField);
+  ok('and the card claims the key', !cardLive);
+  escapeDialog(titleField.closest('dialog'));
+  await until(() => !document.querySelector('.edit__title'), 'the edit dialog to close');
+
+  // Focus View has the same shape: a Done button inside a focusable item.
+  key(document.body, 'f');
+  await until(() => document.querySelector('.commitment'), 'Focus View');
+  const commitment = document.querySelector('.commitment');
+  const commitmentDone = commitment.querySelector('.commitment__done');
+  commitmentDone.focus();
+  const commitmentLive = commitmentDone.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  await wait(60);
+  ok('Enter on a commitment Done button is not cancelled by the commitment', commitmentLive);
+  ok('and does not open the edit dialog', !document.querySelector('.edit__title'));
 `));
 
 console.log(fail === 0 ? `\n  ✓ ${pass} browser checks passed\n` : `\n  ${pass} passed, ${fail} FAILED\n`);

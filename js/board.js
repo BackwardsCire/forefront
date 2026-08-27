@@ -213,6 +213,11 @@
    */
   function onCardKey(e, card, laneId, actions, menuButton) {
     if (e.key === 'Enter' && !e.altKey) {
+      // Enter belongs to whatever is focused. The Done and menu buttons live
+      // inside the card, so their Enter bubbles up to here, and claiming it
+      // would cancel the button's own activation: pressing Enter on Done would
+      // open Edit instead of marking the card done.
+      if (e.target !== e.currentTarget) return;
       e.preventDefault();
       actions.edit(card.id);
     } else if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {

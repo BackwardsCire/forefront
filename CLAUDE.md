@@ -143,6 +143,13 @@ cost real time to diagnose:
 - **A synthetic `keydown` cannot dismiss a native `<dialog>`.** Escape handling
   is UA behaviour driven by real input. Dispatch a cancelable `cancel` event
   instead — see `escapeDialog()`.
+- **A synthetic `keydown` cannot activate a button either.** Untrusted events
+  run no default action, so `Enter` on a focused `<button>` fires no click, and
+  a test that waits for one waits forever. Assert what the app itself does with
+  the key instead — `dispatchEvent()` returns `false` when a handler called
+  `preventDefault()`, which is exactly how "a card must not swallow Enter aimed
+  at its own Done or menu button" is tested. For the click itself you need real
+  input: drive `Input.dispatchKeyEvent` over the DevTools protocol.
 - **Headless matches `@media (hover: none)`**, so hover-revealed card controls
   render visible in screenshots. That is the touch variant, not the desktop one.
 

@@ -214,6 +214,10 @@ into Focus. The backlog disappears again.
 
 Single-key shortcuts are ignored while you are typing.
 
+`Enter` follows focus: it edits the card you are on, but when focus is on one of
+that card's own controls — its done tick, or `···` — `Enter` presses that
+control instead.
+
 On the board, every card also has a `···` menu holding the same moves plus mark
 done, edit and discard — so nothing needs a mouse, and nothing needs a drag.
 Focus View is deliberately barer: a commitment can be opened with `Enter` and
@@ -286,7 +290,9 @@ or periodic export is your real backup.
 
 Forefront tells you. A failed write raises a banner that stays up until a save
 succeeds, and if a capture could not be stored the box stays open with your text
-still in it rather than closing as though it worked. If only one of the two
+still in it rather than closing as though it worked — and nothing is left half
+added behind it, so retrying once storage recovers gives you one card, not one
+per attempt. If only one of the two
 places is accepting writes — browser storage blocked but a data file connected,
 say — it says that too, once, rather than either lying or crying wolf.
 

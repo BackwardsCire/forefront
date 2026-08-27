@@ -403,6 +403,35 @@
     openCaptureDialog();
   }
 
+  /**
+   * Put a captured line in the Inbox, or leave the dataset exactly as it was.
+   *
+   * A capture that could not be stored keeps its dialog open with the text
+   * still in it, to be retried. That is only honest if the dataset is not
+   * quietly holding a copy as well: a card left in memory means the retry adds
+   * a second one, and whichever save finally works then writes both. So the
+   * add is rolled back — including meta.updatedAt, which decides whether the
+   * board on screen counts as newer than the connected file.
+   *
+   * commit() is asked not to render, so the card never appears on screen in
+   * the frame between adding it and taking it back.
+   */
+  function captureToInbox(text) {
+    var updatedAtBefore = state.data.meta.updatedAt;
+    var card = model.addCard(state.data, text, 'inbox');
+    var saved = commit({ render: false });
+
+    if (!saved) {
+      // Not a user deleting anything — undoing an add that never reached
+      // storage. The dialog is now the only copy of what they typed.
+      model.deleteCardForever(state.data, card.id);
+      state.data.meta.updatedAt = updatedAtBefore;
+    }
+
+    render();
+    return saved;
+  }
+
   function openCaptureDialog() {
     var input = el('input', {
       type: 'text',
@@ -422,10 +451,7 @@
           var text = input.value.trim();
           if (!text) { close(); return; }
 
-          model.addCard(state.data, text, 'inbox');
-          var saved = commit();
-
-          if (!saved) {
+          if (!captureToInbox(text)) {
             // The text stays on screen: it was not stored, and clearing the
             // field would be a lie about that.
             return;
@@ -467,8 +493,7 @@
         e.preventDefault();
         var text = input.value.trim();
         if (!text) return;
-        model.addCard(state.data, text, 'inbox');
-        if (commit()) { input.value = ''; ui.toast('Captured', 'ok'); }
+        if (captureToInbox(text)) { input.value = ''; ui.toast('Captured', 'ok'); }
       }
     });
 
