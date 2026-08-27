@@ -34,6 +34,8 @@ any third-party integration.
 Position within a lane **is** the priority, changed by dragging. There is no
 settings screen: every tunable lives in `js/constants.js`.
 
+If the board ever needs a query engine to stay usable, the product has drifted.
+
 **Dark mode used to be on that list and no longer is.** It was removed
 deliberately, by the repository owner, in the same change that added it. The
 reasoning that put it there was never about dark mode itself — it was that a
@@ -42,8 +44,6 @@ answered by *how* it was added, not by refusing it: one icon button in a row
 that already existed, three radio rows, one keyboard shortcut, no new screen.
 If a future change wants to put a second preference next to it, that is the
 moment to say no.
-
-If the board ever needs a query engine to stay usable, the product has drifted.
 
 ## Architecture
 
@@ -131,7 +131,6 @@ something different. A browser start page must never show a blank frame.
   and the light/dark preference, which lives in `C.LS_THEME_KEY`. Syncing a
   theme from a bright office to a dark study would be a bug, and putting it in
   the dataset would rewrite the connected file on every toggle.
-
 - **Everything tolerant about import happens in front of `validateData`, never
   inside it.** Comment stripping, straightening a bare array into a dataset,
   reading "In Progress" as `inprogress` — all of it normalises text into the

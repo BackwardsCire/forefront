@@ -538,8 +538,9 @@ The application code is fine in a public repo. Your actual tasks are not — the
 will contain colleagues' names, company information, project details and
 management context.
 
-`.gitignore` already excludes the obvious filenames, but the safest arrangement
-is simply to keep your data file somewhere else entirely:
+`.gitignore` already excludes the obvious filenames — `forefront-*.json` and the
+`.jsonc` annotated exports among them — but the safest arrangement is simply to
+keep your data file somewhere else entirely:
 
 ```
 OneDrive/Forefront/forefront-data.json     ← your real data
@@ -621,7 +622,8 @@ node tools/browsertest.js    # drives the real index.html in headless Chrome
 node tools/crossbrowsertest.js firefox # localhost smoke test via Firefox WebDriver
 node tools/crossbrowsertest.js safari  # same smoke test via Safari WebDriver on macOS
 node tools/make-example.js   # regenerate example.json with fresh dates
-node tools/screenshot.js DIR # render the views to PNGs
+node tools/make-template.js  # regenerate sample-data/template.jsonc from the format guide
+node tools/screenshot.js DIR # render the views to PNGs, light and dark
 ```
 
 `tools/browsertest.js` builds its page from `index.html` itself, so the tests run
@@ -629,6 +631,12 @@ against the real markup, scripts and stylesheets over `file://` — nothing is
 stubbed. `tools/crossbrowsertest.js` runs the real app over its supported
 localhost URL. Safari requires macOS and one-time WebDriver enablement with
 `safaridriver --enable`.
+
+`tools/check-contrast.js` parses `css/tokens.css` and resolves it the way the
+cascade does, then measures every pair a text token can form with a surface, in
+both themes and all five accent families. It refuses to skip a selector shape it
+does not understand, because a palette this file quietly ignored would be a
+palette nobody ever checked.
 
 ## License
 
