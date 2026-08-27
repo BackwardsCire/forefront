@@ -45,6 +45,29 @@ that already existed, three radio rows, one keyboard shortcut, no new screen.
 If a future change wants to put a second preference next to it, that is the
 moment to say no.
 
+**Two more decisions were reversed by the owner, and both were right to
+reverse.** They are recorded here with their reasoning so nobody quietly puts
+them back:
+
+*The commitment limit is hard now.* It used to be a soft limit — Focus
+mentioned once that three works best and let you carry five. That is a limit
+that does not limit anything, and In Progress duly became a second backlog,
+which is the exact failure this application exists to prevent. Moving a fourth
+card in is now refused, with an explanation that names the three in the way.
+Deliberately no automatic swap: choosing what stops being a commitment IS the
+decision, and an app that makes it for you has taken the only part that
+mattered and left you the bookkeeping.
+
+*Focus View shows Just Do It.* This is the change that comes closest to
+breaking the governing rule, so read the guard rails before touching it. Chores
+under five minutes genuinely belong on the home screen — they are what you do
+in the gaps between hard things — but a full lane of them is a backlog. So the
+column is capped at `FOCUS_JUSTDOIT_VISIBLE`, set in body text against the
+commitments' 30px, in secondary colour, behind a hairline, with "+N more on the
+board" instead of the rest. Every one of those is load-bearing. **If this
+column ever starts competing with the commitments for attention, shrink it —
+do not grow the commitments to match.**
+
 ## Architecture
 
 ```
@@ -78,6 +101,14 @@ purpose, and the storage key is hard-coded in both. Keep them in step.
 `system`. That is what lets `tokens.css` carry one dark block instead of a
 second copy of the palette inside a `prefers-color-scheme` media query, which is
 how the two halves of a theme drift apart.
+
+**Focus View is two columns.** `.focus__body` is the grid; `.focus__main` holds
+the commitments and `.focus__aside` holds Just Do It. The weekly review prompt
+is inserted by `app.js` *before* `.focus__body`, so it spans both. That
+`insertBefore` reference node has to be a direct child of the Focus root —
+pointing it at `.focus__main` after the columns arrived threw `NotFoundError`
+mid-boot and left the app half-initialised with no visible error. Only the
+review scenarios caught it, because the prompt only renders on a Monday.
 
 **No ES modules.** `<script type="module">` is fetched with CORS, and a page
 opened from `file://` has an opaque origin, so modules fail to load the moment
@@ -131,6 +162,15 @@ something different. A browser start page must never show a blank frame.
   and the light/dark preference, which lives in `C.LS_THEME_KEY`. Syncing a
   theme from a bright office to a dark study would be a bug, and putting it in
   the dataset would rewrite the connected file on every toggle.
+- **The commitment limit governs board moves, not data.** Every deliberate
+  route into a lane — drag, card menu, `Alt`+arrow, "not finished after all" —
+  goes through `move()` in `app.js`, so the gate lives there once. Import,
+  restoring a backup and reading a connected file are deliberately NOT gated:
+  refusing part of a load is how you lose work, and a file is allowed to
+  describe a board that is over the limit. The board says so (`lane__note--over`)
+  and the weekly review's Commit step still asks about it. Restoring a
+  discarded commitment is the one middle case, and it goes to Inbox rather than
+  being refused — recovering work must always succeed.
 - **Everything tolerant about import happens in front of `validateData`, never
   inside it.** Comment stripping, straightening a bare array into a dataset,
   reading "In Progress" as `inprogress` — all of it normalises text into the

@@ -208,7 +208,11 @@ report('Focus View with real data', runPage(example, `
      all('.commitment__title').map(n => n.textContent).join('|').includes('Complete team financial analysis'));
   ok('shows today\\'s date', /\\w+day/.test(text('.focus__date') || ''));
   ok('does NOT show the backlog', all('.lane').length === 0);
-  ok('shows lane counts', all('.count').length >= 4);
+
+  // Counts are for what you cannot see. Just Do It and In Progress are both on
+  // screen now, so counting them again would be the same fact told twice.
+  eq('counts only the lanes that are not on screen',
+     all('.count__label').map(n => n.textContent), ['Inbox','Management','Projects']);
   eq('inbox count is 3', text('.count .count__value'), '3');
   ok('shows a quick capture control', !!document.querySelector('.capture-button'));
   ok('ages are rendered', all('.commitment__age').every(n => /^(today|\\d+d)$/.test(n.textContent)));
@@ -324,6 +328,12 @@ report('Dragging', runPage(example, `
   await until(() => document.querySelector('.board'), 'the board');
 
   // --- across lanes: Management -> In Progress ---
+  // In Progress is full in the sample data and now enforces that, so finish
+  // something first. Dragging into a full lane is its own scenario below.
+  click(document.querySelector('.lane--inprogress .card .card__done'));
+  await wait(120);
+  eq('room made in In Progress', all('.lane--inprogress .card').length, 2);
+
   const card = document.querySelector('.lane--management .card');
   const title = card.querySelector('.card__title').textContent;
   const target = document.querySelector('.lane--inprogress .lane__list');
@@ -457,8 +467,12 @@ report('Monday review ritual', runPage(example, `
   ok('asks the Friday question', /Friday/.test(text('.rail__guide')));
   eq('lists the current commitments', all('.commit-list__item').length, 3);
 
+  // Straight through the model, not through an action: moving a fourth card in
+  // is refused now, so the only way a board carries four is that it arrived
+  // that way in a file. That is exactly the case this checkpoint exists for.
   const extraCommitment = data().cards.find(c => c.lane === 'projects' && !c.discardedAt);
-  FF.app.actions.move(extraCommitment.id, 'inprogress', 3);
+  window.FF.model.moveCard(data(), extraCommitment.id, 'inprogress', 3);
+  FF.app.actions.rerender();
   await wait(60);
   eq('a fourth commitment is visible before finishing', all('.commit-list__item').length, 4);
   click(Array.from(document.querySelectorAll('.rail__actions .btn')).find(b => b.textContent === 'Finish review'));
@@ -468,7 +482,8 @@ report('Monday review ritual', runPage(example, `
   await wait(40);
   eq('cancelling the checkpoint keeps the review open', text('.rail__title'), 'Commit');
 
-  FF.app.actions.move(extraCommitment.id, 'projects', 0);
+  window.FF.model.moveCard(data(), extraCommitment.id, 'projects', 0);
+  FF.app.actions.rerender();
   await wait(60);
   click(Array.from(document.querySelectorAll('.rail__actions .btn')).find(b => b.textContent === 'Finish review'));
   await until(() => document.querySelector('.focus'));
@@ -1115,6 +1130,117 @@ report('Import accepts what an assistant would write', runPage(example, `
   eq('"Just Do It" was understood as a lane', added.lane, 'justdoit');
   ok('it went to the bottom of that lane, not the top',
      added.order === Math.max(...data().cards.filter(c => c.lane === 'justdoit').map(c => c.order)));
+`));
+
+report('In Progress takes three and no more', runPage(example, `
+  key(document.body, 'b');
+  await until(() => document.querySelector('.board'), 'the board');
+
+  eq('the lane says so before you try', text('.lane--inprogress .lane__note'), 'full');
+
+  // Through the card menu — the route that needs no pointer, and the one a
+  // keyboard user takes.
+  const card = document.querySelector('.lane--management .card');
+  const cardId = card.dataset.cardId;
+  click(card.querySelector('.card__menu'));
+  const menu = await until(() => document.querySelector('.menu'), 'the card menu');
+  click(all('.menu__item', menu).find(b => b.textContent.trim() === 'In Progress'));
+
+  const stop = await until(() => document.querySelector('.dialog--limit'), 'the refusal');
+  ok('it explains instead of doing nothing', /In Progress is full/.test(text('.dialog__title', stop)));
+  eq('it names what is standing in the way', all('.limit-list__item', stop).length, 3);
+  ok('and says it will not choose for you', /will not choose for you/.test(stop.textContent));
+  eq('the card did not move', window.FF.model.findCard(data(), cardId).lane, 'management');
+  eq('In Progress is untouched',
+     data().cards.filter(c => c.lane === 'inprogress' && !c.discardedAt).length, 3);
+  ok('nothing was written to storage',
+     JSON.parse(localStorage.getItem('forefront.data.v1'))
+       .cards.filter(c => c.lane === 'inprogress' && !c.discardedAt).length === 3);
+
+  escapeDialog(stop);
+  await until(() => !document.querySelector('.dialog--limit'), 'the refusal to close');
+
+  // Alt+Right is the same gate. From Just Do It, one lane right IS In Progress
+  // — the lanes are ordered inbox, management, projects, justdoit, inprogress,
+  // done, so this is the shortest keyboard route into a full lane.
+  const chore = document.querySelector('.lane--justdoit .card');
+  chore.focus();
+  key(chore, 'ArrowRight', { altKey: true });
+  const stop2 = await until(() => document.querySelector('.dialog--limit'), 'the refusal again');
+  ok('the keyboard route is gated too', !!stop2);
+  escapeDialog(stop2);
+  await until(() => !document.querySelector('.dialog--limit'), 'it to close');
+
+  // Reordering inside a full lane is not adding a fourth, and must still work.
+  const before = all('.lane--inprogress .card__title').map(n => n.textContent);
+  const last = all('.lane--inprogress .card').pop();
+  last.focus();
+  key(last, 'ArrowUp', { altKey: true });
+  await wait(120);
+  ok('reordering within a full lane still works',
+     all('.lane--inprogress .card__title')[1].textContent === before[2]);
+  ok('and did not trigger the refusal', !document.querySelector('.dialog--limit'));
+
+  // Take one out, and the fourth is welcome.
+  click(document.querySelector('.lane--inprogress .card .card__done'));
+  await wait(140);
+  eq('finishing one makes room', all('.lane--inprogress .card').length, 2);
+
+  const again = document.querySelector('.lane--management .card');
+  const againId = again.dataset.cardId;
+  click(again.querySelector('.card__menu'));
+  const menu2 = await until(() => document.querySelector('.menu'), 'the menu again');
+  click(all('.menu__item', menu2).find(b => b.textContent.trim() === 'In Progress'));
+  await wait(140);
+  ok('and then it goes in', window.FF.model.findCard(data(), againId).lane === 'inprogress');
+  eq('back to three', all('.lane--inprogress .card').length, 3);
+`));
+
+report('Focus shows Just Do It beside the commitments', runPage(example, `
+  const aside = document.querySelector('.focus__aside');
+  ok('the column is there', !!aside);
+  eq('it is labelled with the lane', text('#quick-label'), 'Just Do It');
+
+  eq('it is capped rather than a full list', all('.quick__item').length, 5);
+  ok('and says what it is not showing', /\\+1 more on the board/.test(text('.quick__more') || ''));
+
+  // The whole constraint on this feature: In Progress stays the thing you see.
+  const main = document.querySelector('.focus__main').getBoundingClientRect();
+  const side = aside.getBoundingClientRect();
+  ok('it sits beside the commitments, not under them',
+     side.left >= main.right - 1 && Math.abs(side.top - main.top) < 4);
+  ok('and it is the narrower column', side.width < main.width * 0.6);
+  ok('commitments are still far bigger', (function () {
+    const c = parseFloat(getComputedStyle(document.querySelector('.commitment__title')).fontSize);
+    const q = parseFloat(getComputedStyle(document.querySelector('.quick__title')).fontSize);
+    return c >= q * 2;
+  })());
+
+  // It is a working column, not a readout.
+  const first = document.querySelector('.quick__item');
+  const chore = first.querySelector('.quick__title').textContent;
+  click(first.querySelector('.quick__done'));
+  await wait(140);
+  eq('ticking a chore completes it', data().cards.find(c => c.title === chore).lane, 'done');
+  eq('and the one that was hidden takes its place', all('.quick__item').length, 5);
+  ok('nothing is left over', !document.querySelector('.quick__more'));
+
+  // Enter follows focus here too: the row edits, its tick does not.
+  const row = document.querySelector('.quick__item');
+  row.focus();
+  const rowLive = row.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  const field = await until(() => document.querySelector('.edit__title'), 'the edit dialog');
+  ok('Enter on a chore opens Edit', !!field);
+  ok('and the row claims the key', !rowLive);
+  escapeDialog(field.closest('dialog'));
+  await until(() => !document.querySelector('.edit__title'), 'the edit dialog to close');
+
+  const tick = document.querySelector('.quick__item .quick__done');
+  tick.focus();
+  const tickLive = tick.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  await wait(60);
+  ok('Enter on the tick is not swallowed by the row', tickLive);
+  ok('and does not open Edit', !document.querySelector('.edit__title'));
 `));
 
 console.log(fail === 0 ? `\n  ✓ ${pass} browser checks passed\n` : `\n  ${pass} passed, ${fail} FAILED\n`);

@@ -24,9 +24,37 @@ FF.C = {
    *  It is never deleted — after this it simply stops cluttering the board. */
   DONE_VISIBLE_DAYS: 4,
 
-  /** How many commitments Focus View treats as dominant. Going over this is
-   *  allowed; Forefront only mentions it, quietly, once. */
+  /** How many commitments Focus View shows, and — see below — how many
+   *  In Progress will accept. */
   FOCUS_COMMITMENTS: 3,
+
+  /**
+   * Refuse to move a fourth card into In Progress.
+   *
+   * This started as a soft limit: Forefront mentioned it once and let you
+   * carry five. That is a limit that does not limit anything, and the lane
+   * quietly became a second backlog — which is the failure this whole app
+   * exists to avoid.
+   *
+   * The refusal deliberately does NOT swap anything out for you. Deciding
+   * what stops being a commitment IS the decision; an app that makes it
+   * automatically has taken the only part that matters and left you with the
+   * bookkeeping. So it explains, names what is in the way, and stops.
+   *
+   * Set to false to go back to the soft limit.
+   */
+  ENFORCE_COMMITMENT_LIMIT: true,
+
+  /**
+   * How many Just Do It cards Focus View shows beside the commitments.
+   *
+   * There is a real tension here. Five-minute chores belong on the home
+   * screen — they are what you do between the hard things — but an unbounded
+   * list of them turns Focus into the backlog, which is the one thing it must
+   * never be. A short column with "+N more on the board" underneath keeps the
+   * useful half and refuses the rest.
+   */
+  FOCUS_JUSTDOIT_VISIBLE: 5,
 
   /** Day of the week the review ritual belongs to. 0=Sunday, 1=Monday. */
   REVIEW_DAY: 1,
@@ -113,4 +141,4 @@ FF.LANE_BY_ID = FF.LANES.reduce(function (map, lane) {
  * text contrast never change, so the app feels slightly different week to week
  * without ever moving anything or hurting legibility.
  */
-FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'maroon', 'burgundy'];
+FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];

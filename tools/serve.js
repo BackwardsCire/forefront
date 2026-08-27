@@ -19,7 +19,10 @@ const TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml'
+  '.svg': 'image/svg+xml',
+  // The annotated template. Served as plain text so a browser shows it rather
+  // than trying and failing to parse it as JSON — it has comments in it.
+  '.jsonc': 'text/plain; charset=utf-8'
 };
 
 function safePath(urlPath) {

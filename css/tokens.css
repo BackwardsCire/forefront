@@ -37,53 +37,53 @@
   color-scheme: light;
 
   /* ---- Surfaces ---------------------------------------------------- */
-  --bg-page:           #f6f7f9;
+  --bg-page:           #eef1f7;
   --bg-surface:        #ffffff;
-  --bg-surface-subtle: #f1f3f6;
-  --bg-overlay:        rgba(23, 32, 51, 0.28);
+  --bg-surface-subtle: #e6ebf3;
+  --bg-overlay:        rgba(20, 28, 45, 0.30);
 
   /* The fill under a hovered button, count or menu row. Separate from
      --bg-surface-subtle, which it matches exactly here, because the two want
      opposite things in dark: a recessed panel goes darker, a hover goes
      lighter. Sharing one token made hovering a card's menu row dim it. */
-  --bg-hover:          #f1f3f6;
+  --bg-hover:          #e2e8f2;
 
   /* ---- Text -------------------------------------------------------- */
-  --text-primary:   #172033;
-  --text-secondary: #475569;
-  --text-muted:     #55637a;
-  --text-faint:     #5f6d80;
+  --text-primary:   #1a2436;
+  --text-secondary: #465369;
+  --text-muted:     #545f75;
+  --text-faint:     #5b677d;
   --text-inverse:   #ffffff;
 
   /* ---- Accents ----------------------------------------------------- *
    * Overridden per week by the [data-accent] blocks at the foot of this
    * file. Only these four move; everything above stays fixed so that
    * contrast and hierarchy never change with the week.                  */
-  --accent-primary:   #3f5a7d;
-  --accent-strong:    #2f4560;
-  --accent-secondary: #6d3b46;
-  --focus-wash:       #f3f5f9;
+  --accent-primary:   #3d5a80;
+  --accent-strong:    #2d4562;
+  --accent-secondary: #6a4a58;
+  --focus-wash:       #f2f5fb;
 
   /* ---- Lines and depth --------------------------------------------- */
-  --border-subtle:  #e3e8ee;
-  --border-muted:   #d3dae3;
-  --border-strong:  #b8c2ce;
+  --border-subtle:  #dee4ef;
+  --border-muted:   #cad2e0;
+  --border-strong:  #aab4c6;
 
   /* The soft halo on a focused text field. Kept out of the weekly rotation:
      it is three translucent pixels and nobody will ever notice it change hue,
      but every family would need a value and one of them would drift. */
-  --ring:           rgba(63, 90, 125, 0.16);
-  --shadow-card:    0 1px 2px rgba(23, 32, 51, 0.05);
-  --shadow-raised:  0 2px 5px rgba(23, 32, 51, 0.07);
-  --shadow-drag:    0 10px 26px rgba(23, 32, 51, 0.16);
-  --shadow-dialog:  0 18px 48px rgba(23, 32, 51, 0.20);
+  --ring:           rgba(61, 90, 128, 0.16);
+  --shadow-card:    0 1px 2px rgba(20, 28, 45, 0.06);
+  --shadow-raised:  0 2px 5px rgba(20, 28, 45, 0.08);
+  --shadow-drag:    0 10px 26px rgba(20, 28, 45, 0.18);
+  --shadow-dialog:  0 18px 48px rgba(20, 28, 45, 0.22);
 
   /* ---- Meaning ----------------------------------------------------- */
-  --danger:      #9b2c3a;
-  --danger-wash: #fdf4f5;
-  --ok:          #2f6b52;
-  --warn:        #8a6118;
-  --warn-wash:   #fdf8ef;
+  --danger:      #97303c;
+  --danger-wash: #fbf2f3;
+  --ok:          #2c6a51;
+  --warn:        #825c19;
+  --warn-wash:   #fbf6ed;
 
   /* ---- Type -------------------------------------------------------- *
    * A system stack. Segoe UI on Windows 11, SF on macOS. No web fonts,
@@ -126,7 +126,8 @@
   --lane-base-width: 17.5rem;
   --lane-gap: var(--space-4);
   --board-max: 96rem;
-  --focus-max: 44rem;
+  --focus-max: 62rem;
+  --focus-aside: 15.5rem;
 
   /* ---- Motion ------------------------------------------------------ */
   --ease: cubic-bezier(0.2, 0, 0.2, 1);
@@ -144,42 +145,49 @@
  * hue and the wash behind Focus. It is enough to stop the page becoming
  * wallpaper and not enough to notice as a "theme".
  *
+ * All five are cool — blue, teal-blue, indigo, grey-blue, violet-grey. Two of
+ * them used to be maroon and burgundy, on the theory that warmth added
+ * variety; what it actually added was one week in five that felt like a
+ * different, slightly agitated application. Variety inside a narrow, calm
+ * range is the point. If a family ever needs replacing, replace it with
+ * another cool one.
+ *
  * Turn it off with WEEKLY_ACCENT_ROTATION in js/constants.js.
  */
 
 [data-accent="slate"] {
-  --accent-primary:   #3f5a7d;
-  --accent-strong:    #2f4560;
-  --accent-secondary: #6d3b46;
-  --focus-wash:       #f3f5f9;
+  --accent-primary:   #3d5a80;
+  --accent-strong:    #2d4562;
+  --accent-secondary: #6a4a58;
+  --focus-wash:       #f2f5fb;
 }
 
 [data-accent="steel"] {
-  --accent-primary:   #36617a;
-  --accent-strong:    #294b5e;
-  --accent-secondary: #6d3b46;
-  --focus-wash:       #f1f6f8;
+  --accent-primary:   #345f79;
+  --accent-strong:    #264858;
+  --accent-secondary: #6a4a58;
+  --focus-wash:       #eff5f8;
 }
 
 [data-accent="navy"] {
-  --accent-primary:   #33456f;
-  --accent-strong:    #263455;
-  --accent-secondary: #6b3350;
-  --focus-wash:       #f3f4fa;
+  --accent-primary:   #37477a;
+  --accent-strong:    #283459;
+  --accent-secondary: #644562;
+  --focus-wash:       #f1f2fb;
 }
 
-[data-accent="maroon"] {
-  --accent-primary:   #4a5a72;
-  --accent-strong:    #384558;
-  --accent-secondary: #7a3a44;
-  --focus-wash:       #faf5f5;
+[data-accent="stone"] {
+  --accent-primary:   #47566c;
+  --accent-strong:    #35414f;
+  --accent-secondary: #6a4a58;
+  --focus-wash:       #f1f3f8;
 }
 
-[data-accent="burgundy"] {
-  --accent-primary:   #4f5763;
-  --accent-strong:    #3b424c;
-  --accent-secondary: #6b3350;
-  --focus-wash:       #faf4f7;
+[data-accent="heather"] {
+  --accent-primary:   #524a70;
+  --accent-strong:    #3d3754;
+  --accent-secondary: #644562;
+  --focus-wash:       #f4f2fa;
 }
 
 /* ==================================================================
@@ -211,41 +219,41 @@
   color-scheme: dark;
 
   /* ---- Surfaces ---------------------------------------------------- */
-  --bg-page:           #14171e;
-  --bg-surface:        #1c212b;
-  --bg-surface-subtle: #181c24;
-  --bg-hover:          #272d39;
-  --bg-overlay:        rgba(5, 7, 11, 0.66);
+  --bg-page:           #11151d;
+  --bg-surface:        #1a1f2a;
+  --bg-surface-subtle: #161b24;
+  --bg-hover:          #252c3a;
+  --bg-overlay:        rgba(4, 6, 11, 0.68);
 
   /* ---- Text -------------------------------------------------------- */
-  --text-primary:   #e7ecf4;
-  --text-secondary: #b8c2d1;
-  --text-muted:     #a3aebe;
-  --text-faint:     #939fb1;
-  --text-inverse:   #12151c;
+  --text-primary:   #e6ebf5;
+  --text-secondary: #b6c1d3;
+  --text-muted:     #a1adc0;
+  --text-faint:     #919eb3;
+  --text-inverse:   #101520;
 
   /* ---- Accents ----------------------------------------------------- */
-  --accent-primary:   #8ba9d0;
-  --accent-strong:    #a9c0e0;
-  --accent-secondary: #d69dab;
-  --focus-wash:       #181d27;
+  --accent-primary:   #8aaad4;
+  --accent-strong:    #a8c0e2;
+  --accent-secondary: #d3a0b0;
+  --focus-wash:       #161c28;
 
   /* ---- Lines and depth --------------------------------------------- */
-  --border-subtle:  #262c37;
-  --border-muted:   #323a47;
-  --border-strong:  #4b5666;
+  --border-subtle:  #242b38;
+  --border-muted:   #313949;
+  --border-strong:  #4a5568;
   --shadow-card:    0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-raised:  0 2px 6px rgba(0, 0, 0, 0.46);
   --shadow-drag:    0 12px 30px rgba(0, 0, 0, 0.58);
   --shadow-dialog:  0 20px 54px rgba(0, 0, 0, 0.62);
-  --ring:           rgba(139, 169, 208, 0.24);
+  --ring:           rgba(138, 170, 214, 0.24);
 
   /* ---- Meaning ----------------------------------------------------- */
-  --danger:      #ef9aa4;
-  --danger-wash: #2b191d;
-  --ok:          #7cc9a2;
-  --warn:        #e2b45f;
-  --warn-wash:   #2a2214;
+  --danger:      #ee98a4;
+  --danger-wash: #29181d;
+  --ok:          #79c8a2;
+  --warn:        #e0b25f;
+  --warn-wash:   #282114;
 }
 
 /**
@@ -263,36 +271,36 @@
  */
 
 :root[data-theme="dark"][data-accent="slate"] {
-  --accent-primary:   #8ba9d0;
-  --accent-strong:    #a9c0e0;
-  --accent-secondary: #d69dab;
-  --focus-wash:       #181d27;
+  --accent-primary:   #8aaad4;
+  --accent-strong:    #a8c0e2;
+  --accent-secondary: #d3a0b0;
+  --focus-wash:       #161c28;
 }
 
 :root[data-theme="dark"][data-accent="steel"] {
-  --accent-primary:   #7cadc8;
-  --accent-strong:    #9dc5da;
-  --accent-secondary: #d69dab;
-  --focus-wash:       #161d23;
+  --accent-primary:   #7cadc9;
+  --accent-strong:    #9cc5db;
+  --accent-secondary: #d3a0b0;
+  --focus-wash:       #141c22;
 }
 
 :root[data-theme="dark"][data-accent="navy"] {
-  --accent-primary:   #97a7da;
-  --accent-strong:    #b2bfe8;
-  --accent-secondary: #d398bd;
-  --focus-wash:       #181b2a;
+  --accent-primary:   #97a6dd;
+  --accent-strong:    #b2bfe9;
+  --accent-secondary: #cf9cc2;
+  --focus-wash:       #171a2a;
 }
 
-:root[data-theme="dark"][data-accent="maroon"] {
-  --accent-primary:   #a3b0c6;
-  --accent-strong:    #bcc6d7;
-  --accent-secondary: #dc9ba5;
-  --focus-wash:       #1f1b1d;
+:root[data-theme="dark"][data-accent="stone"] {
+  --accent-primary:   #a2aec4;
+  --accent-strong:    #bcc5d6;
+  --accent-secondary: #d3a0b0;
+  --focus-wash:       #1a1e26;
 }
 
-:root[data-theme="dark"][data-accent="burgundy"] {
-  --accent-primary:   #a9b0bc;
-  --accent-strong:    #c2c8d1;
-  --accent-secondary: #d398bd;
-  --focus-wash:       #1f1a23;
+:root[data-theme="dark"][data-accent="heather"] {
+  --accent-primary:   #a9a3c6;
+  --accent-strong:    #c2bdda;
+  --accent-secondary: #cf9cc2;
+  --focus-wash:       #1b1924;
 }

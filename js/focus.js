@@ -29,21 +29,94 @@
       renderHeader(data, actions),
       // A <div>, not a <main>: index.html already provides the page's single
       // <main> landmark and nesting a second one inside it is invalid.
-      el('div', { class: 'focus__main' }, [
-        el('h2', { class: 'focus__label', id: 'focus-label', text: 'Focus' }),
-        top.length
-          ? renderCommitments(top, actions)
-          : renderEmpty(actions),
-        // One line, not two. An earlier version printed "+2 more active" and
-        // "5 active — Focus works best with 3" one under the other, which is
-        // the same fact told twice and reads as fussing.
-        extra > 0 ? el('p', {
-          class: 'focus__extra',
-          text: '+' + extra + ' more active — Focus works best with ' + C.FOCUS_COMMITMENTS + '.'
-        }) : null
+      el('div', { class: 'focus__body' }, [
+        el('div', { class: 'focus__main' }, [
+          el('h2', { class: 'focus__label', id: 'focus-label', text: 'Focus' }),
+          top.length
+            ? renderCommitments(top, actions)
+            : renderEmpty(actions),
+          // One line, not two. An earlier version printed "+2 more active" and
+          // "5 active — Focus works best with 3" one under the other, which is
+          // the same fact told twice and reads as fussing.
+          //
+          // With the commitment limit enforced this can now only happen to a
+          // board that arrived over the limit through an import, so it says
+          // what to do about it rather than offering advice.
+          extra > 0 ? el('p', {
+            class: 'focus__extra',
+            text: '+' + extra + ' more in In Progress. Focus shows ' + C.FOCUS_COMMITMENTS +
+                  ' — take ' + extra + ' out on the board.'
+          }) : null,
+          renderCapture(actions)
+        ]),
+        renderQuick(data, actions)
       ]),
-      renderCapture(actions),
       renderFooter(data, actions)
+    ]);
+  }
+
+  /**
+   * Just Do It, beside the commitments.
+   *
+   * The rule this has to keep is that In Progress is still the thing you see
+   * when the page opens. So this is a column and not a second half: narrower,
+   * set at body size against the commitments' 30px, in secondary text, behind
+   * a hairline — a margin note, not a board.
+   *
+   * And it is capped. Five-minute chores genuinely belong on the home screen
+   * — they are what you do in the gaps between hard things — but an unbounded
+   * list of them is a backlog, and the backlog is not the home screen. Five
+   * rows and a count is the useful half; the rest stays where it lives.
+   */
+  function renderQuick(data, actions) {
+    var lane = FF.LANE_BY_ID.justdoit;
+    var cards = model.laneCards(data, lane.id);
+    var shown = cards.slice(0, C.FOCUS_JUSTDOIT_VISIBLE);
+    var hidden = cards.length - shown.length;
+
+    return el('aside', { class: 'focus__aside', 'aria-labelledby': 'quick-label' }, [
+      el('h2', { class: 'focus__label', id: 'quick-label', text: lane.label }),
+
+      shown.length
+        ? el('ul', { class: 'quick' }, shown.map(function (card) {
+            return renderQuickItem(card, actions);
+          }))
+        : el('p', { class: 'quick__empty', text: 'Nothing small waiting.' }),
+
+      hidden > 0 ? el('button', {
+        type: 'button',
+        class: 'quick__more',
+        text: '+' + hidden + ' more on the board',
+        onclick: function () { actions.showBoard(lane.id); }
+      }) : null
+    ]);
+  }
+
+  function renderQuickItem(card, actions) {
+    var label = card.title;
+
+    return el('li', {
+      class: 'quick__item',
+      dataset: { cardId: card.id },
+      tabindex: '0',
+      // Same rule as a commitment: Enter edits the row, unless focus is on the
+      // row's own tick, in which case Enter belongs to the tick.
+      onkeydown: function (e) {
+        if (e.key !== 'Enter' || e.altKey) return;
+        if (e.target !== e.currentTarget) return;
+        e.preventDefault();
+        actions.edit(card.id);
+      },
+      ondblclick: function () { actions.edit(card.id); }
+    }, [
+      el('button', {
+        type: 'button',
+        class: 'quick__done',
+        'aria-label': 'Mark “' + label + '” done',
+        title: 'Mark done',
+        onclick: function (e) { e.stopPropagation(); actions.complete(card.id); }
+      }, [tick()]),
+      el('span', { class: 'quick__title', text: card.title })
     ]);
   }
 
@@ -133,7 +206,14 @@
   function renderFooter(data, actions) {
     var counts = model.laneCounts(data);
 
-    var lanes = FF.LANES.filter(function (l) { return l.id !== 'done'; }).map(function (lane) {
+    // Counts are for what you cannot see. Done never had one; In Progress and
+    // Just Do It are both on screen now, and a number repeating what is three
+    // inches above it is the same fact told twice.
+    var HIDDEN_FROM_COUNTS = ['done', 'inprogress', 'justdoit'];
+
+    var lanes = FF.LANES.filter(function (l) {
+      return HIDDEN_FROM_COUNTS.indexOf(l.id) === -1;
+    }).map(function (lane) {
       return el('button', {
         type: 'button',
         class: 'count' + (counts[lane.id] === 0 ? ' count--zero' : ''),

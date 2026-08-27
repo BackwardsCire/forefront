@@ -67,7 +67,7 @@
 
     if (!caps.localStorage) {
       rows.push(note(caps.fileProtocol
-        ? 'This browser refuses storage for pages opened directly from disk. On macOS, use start-mac.command to run Forefront on localhost instead.'
+        ? 'This browser refuses storage for pages opened directly from disk. Start Forefront with its launcher instead — start-mac.command, start-windows.cmd or start-linux.sh — which runs it on localhost, where storage works.'
         : 'Your browser is blocking site data. Private browsing and some managed policies do this.'));
     } else if (caps.fileProtocol) {
       // Every page opened from disk shares one storage area in Chrome — the

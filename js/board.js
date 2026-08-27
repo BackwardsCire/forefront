@@ -117,9 +117,7 @@
       el('div', { class: 'lane__header' }, [
         el('h2', { class: 'lane__title', id: headingId, text: lane.label }),
         el('span', { class: 'lane__count', text: String(counts[lane.id]) }),
-        lane.id === 'inprogress' && counts.inprogress > C.FOCUS_COMMITMENTS
-          ? el('span', { class: 'lane__note', text: 'top ' + C.FOCUS_COMMITMENTS + ' drive Focus' })
-          : null,
+        lane.id === 'inprogress' ? commitmentNote(counts.inprogress) : null,
         lane.id === 'done'
           ? el('span', { class: 'lane__note', text: 'last ' + C.DONE_VISIBLE_DAYS + ' days' })
           : null
@@ -133,6 +131,26 @@
         : [el('li', { class: 'lane__empty', dataset: { dragSkip: '' }, text: emptyText(lane) })]
       )
     ]);
+  }
+
+  /**
+   * The one lane that says how full it is.
+   *
+   * "full" at rest is the cheap half of enforcing the limit — it means the
+   * refusal dialog is a reminder rather than a surprise. The over-count line
+   * only appears for data that arrived over the limit through an import or a
+   * connected file, which the limit deliberately does not police.
+   */
+  function commitmentNote(count) {
+    if (count > C.FOCUS_COMMITMENTS) {
+      return el('span', { class: 'lane__note lane__note--over',
+        text: count + ' of ' + C.FOCUS_COMMITMENTS + ' — take ' +
+              (count - C.FOCUS_COMMITMENTS) + ' out' });
+    }
+    if (C.ENFORCE_COMMITMENT_LIMIT && count === C.FOCUS_COMMITMENTS) {
+      return el('span', { class: 'lane__note', text: 'full' });
+    }
+    return null;
   }
 
   function emptyText(lane) {

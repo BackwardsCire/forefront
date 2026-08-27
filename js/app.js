@@ -202,7 +202,7 @@
     if (!s.caps.localStorage) {
       showBanner('bad',
         s.caps.fileProtocol
-          ? 'This browser will not let a page opened from disk store data, so nothing you do here will be saved. On macOS, close this tab and double-click start-mac.command to reopen Forefront in its supported localhost mode.'
+          ? 'This browser will not let a page opened from disk store data, so nothing you do here will be saved. Close this tab and start Forefront with its launcher — start-mac.command, start-windows.cmd or start-linux.sh — to reopen it on localhost, where storage works.'
           : 'This browser is blocking site data, so nothing you do here will be saved. Export before you close the tab.',
         s.caps.fileWrite ? [{ label: 'Connect a data file…', primary: true, onClick: openData }] : [],
         false);
@@ -338,7 +338,12 @@
       var focusNode = FF.focus.render(state.data, actions);
       var prompt = FF.review.renderPrompt(state.data, actions);
       var indicator = FF.review.renderIndicator(state.data, actions);
-      if (prompt) focusNode.insertBefore(prompt, focusNode.querySelector('.focus__main'));
+      // Before the two-column body, so the prompt spans the full width and the
+      // commitments stay where they were. The reference node has to be a child
+      // of focusNode — insertBefore throws on anything deeper, which is exactly
+      // what happened when the commitments moved one level down into
+      // .focus__body and this still pointed at .focus__main.
+      if (prompt) focusNode.insertBefore(prompt, focusNode.querySelector('.focus__body'));
       if (indicator) focusNode.querySelector('.focus__actions').appendChild(indicator);
       if (switched) focusNode.classList.add('view-enter');
       root.appendChild(focusNode);
@@ -568,11 +573,80 @@
     ui.toast('Discarded — kept in your data', 'info');
   }
 
+  // ------------------------------------------------------------------
+  // The commitment limit
+  //
+  // In Progress takes FOCUS_COMMITMENTS cards and no more. Every deliberate
+  // route into a lane — dragging, the card menu, Alt+arrow, "not finished
+  // after all" — goes through move(), so gating it here gates all of them
+  // with one check rather than four that can drift apart.
+  //
+  // What is NOT gated, on purpose: loading data. Import, restoring a backup
+  // and reading a connected file must reproduce the file exactly, including a
+  // board that is over the limit, because refusing part of a load is how you
+  // lose work. The limit governs what you do on the board, not what your data
+  // is allowed to contain — and the app renders an over-full lane correctly
+  // either way.
+  // ------------------------------------------------------------------
+
+  function commitmentLimitReached() {
+    return C.ENFORCE_COMMITMENT_LIMIT &&
+           model.commitments(state.data).length >= C.FOCUS_COMMITMENTS;
+  }
+
+  /** True if the move may proceed. Explains itself when it may not. */
+  function allowedIntoCommitments(card, fromLane, toLane) {
+    if (toLane !== 'inprogress') return true;
+    if (fromLane === 'inprogress') return true;   // reordering within the lane
+    if (!commitmentLimitReached()) return true;
+
+    refuseCommitment(card);
+    return false;
+  }
+
+  function refuseCommitment(card) {
+    var current = model.commitments(state.data);
+
+    ui.announce('In Progress is full. Take one out before adding “' + card.title + '”.');
+
+    ui.openDialog({
+      className: 'dialog--limit',
+      labelledBy: 'limit-title',
+      build: function (close) {
+        return el('div', { class: 'dialog__body' }, [
+          el('h2', { class: 'dialog__title', id: 'limit-title', text: 'In Progress is full' }),
+          el('p', { class: 'dialog__message', text:
+            'Forefront holds ' + C.FOCUS_COMMITMENTS + ' commitments at a time, and “' +
+            card.title + '” would be the ' + ordinal(current.length + 1) + '.' }),
+          el('p', { class: 'dialog__message', text:
+            'Take one of these out first — mark it done, or move it back to its lane — ' +
+            'and then bring this one in. Forefront will not choose for you: which thing ' +
+            'stops being a commitment is the decision worth making.' }),
+          el('ol', { class: 'limit-list' }, current.map(function (c) {
+            return el('li', { class: 'limit-list__item', text: c.title });
+          })),
+          el('div', { class: 'dialog__actions' }, [
+            el('button', {
+              type: 'button', class: 'btn btn--primary', text: 'Close',
+              'data-autofocus': '', onclick: function () { close(); }
+            })
+          ])
+        ]);
+      }
+    });
+  }
+
+  function ordinal(n) {
+    var names = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
+    return names[n] || (n + 'th');
+  }
+
   function move(cardId, laneId, index, options) {
     var card = model.findCard(state.data, cardId);
     if (!card) return;
 
     var fromLane = card.lane;
+    if (!allowedIntoCommitments(card, fromLane, laneId)) return;
     var fromIndex = model.laneCards(state.data, fromLane)
       .findIndex(function (c) { return c.id === cardId; });
 
@@ -618,9 +692,22 @@
   }
 
   function restore(cardId) {
+    var card = model.findCard(state.data, cardId);
+    if (!card) return;
+
+    // A discarded commitment coming back would be a fourth commitment. This
+    // diverts it to Inbox rather than refusing: recovering work must always
+    // succeed, and Inbox is where undecided things belong anyway. Refusing
+    // here would mean a card you can see in the Data panel and cannot get
+    // back, which is a worse bargain than re-filing it.
+    var divert = C.ENFORCE_COMMITMENT_LIMIT &&
+                 model.restoreLaneFor(card) === 'inprogress' &&
+                 commitmentLimitReached();
+
     model.restoreCard(state.data, cardId);
+    if (divert) model.moveCard(state.data, cardId, 'inbox', 0);
     commit();
-    ui.toast('Restored', 'ok');
+    ui.toast(divert ? 'Restored to Inbox — In Progress is full' : 'Restored', 'ok');
   }
 
   function deleteForever(cardId) {

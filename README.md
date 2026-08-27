@@ -52,7 +52,7 @@ Six activities, kept apart on purpose:
 | **Capture** | What just entered my head? One keystroke, no questions. |
 | **Triage** | What is this, actually? Later, by dragging. |
 | **Rank** | What matters more than what? Position, not priority fields. |
-| **Commit** | What have I decided deserves attention? About three things. |
+| **Commit** | What have I decided deserves attention? Three things, enforced. |
 | **Execute** | What should I be working on? The default screen. |
 | **Review** | Are my priorities still right? Monday, for two minutes. |
 
@@ -62,41 +62,100 @@ never *"here are 37 things to feel guilty about."*
 
 ---
 
-## Running it
+## Install
 
-```bash
-git clone https://github.com/BackwardsCire/forefront.git
-cd forefront
-```
+**You download the whole folder, and you run it from there.** There is no
+installer, no account, no `npm install`, and nothing is ever uploaded — the page
+runs from your own disk and talks to nothing but itself.
 
-On macOS, double-click **`start-mac.command`**. It starts Forefront on
-`http://127.0.0.1:8765/` and opens the default browser. Keep its Terminal window
-open while using Forefront. This is the supported setup for current Chrome,
-Firefox and Safari.
+### 1. Download it
 
-From a terminal, the equivalent is:
+On this page: the green **Code** button → **Download ZIP**. Unzip it somewhere
+you intend to keep, like `Documents/Forefront`.
 
-```bash
-node tools/serve.js --open
-```
+If you use git, `git clone https://github.com/BackwardsCire/forefront.git` does
+the same job.
 
-The launcher falls back to Python 3 when Node is unavailable. There is no
-`npm install`, and localhost traffic never leaves the Mac. To use a different
-browser, open `http://127.0.0.1:8765/` in it.
+### 2. Start it
 
-Opening `index.html` directly remains available as a Chrome convenience, but is
-not the cross-browser setup: browser storage and file permissions for `file://`
-pages differ by browser.
+Double-click the launcher for your machine:
 
-A fresh clone is complete and immediately usable. `sample-data/empty.json` is a
-pristine empty dataset you can copy somewhere to use as your real data file, and
-`sample-data/example.json` is a populated demo board you can import to have a
-look around before committing to anything.
+| | |
+|---|---|
+| **macOS** | `start-mac.command` |
+| **Windows** | `start-windows.cmd` |
+| **Linux** | `start-linux.sh` |
+
+It opens `http://127.0.0.1:8765/` in your browser and leaves a small terminal
+window behind. **That window is the server — leave it open while you are using
+Forefront**, and close it when you are done for the day.
+
+The launchers need **Node.js or Python 3**, whichever you already have. macOS
+and most Linux installs ship Python 3 already. On Windows you probably have
+neither: [nodejs.org](https://nodejs.org) is the smaller download, and the
+default options are correct.
+
+Two things that catch people out the first time:
+
+- **macOS** may say the file "cannot be opened because it is from an
+  unidentified developer". Right-click the launcher → **Open** → **Open**. You
+  only do this once. (If nothing happens at all, the ZIP dropped the
+  executable bit: open Terminal in the folder and run
+  `chmod +x start-mac.command`.)
+- **Linux** needs the same bit: `chmod +x start-linux.sh` once.
+
+### 3. Make it the page your browser opens
+
+This is the part that makes Forefront work at all — it is designed to turn up in
+your day whether or not you remember it. Set `http://127.0.0.1:8765/` as your
+browser's start page and new-tab page; see
+[Making it your start page](#making-it-your-start-page) for the per-browser
+steps.
+
+### Chrome and Edge: the no-launcher shortcut
+
+If you only use Chrome or Edge, you can skip step 2 entirely and just
+**double-click `index.html`** in the folder you unzipped. No Node, no Python, no
+terminal window, nothing to leave running.
+
+It is genuinely simpler, and there are two real trade-offs. Browser storage for
+local files is shared with every other local page you open, so it is not a
+private place to keep work notes — connect a data file (below) and the problem
+goes away. And Firefox and Safari restrict local pages differently, so this
+route is Chrome and Edge only.
+
+### What you will see first
+
+An empty board and a prompt to write something down. Two files come with the
+download if you want more than that:
+
+- `sample-data/example.json` — a populated demo board. **Data → Import**, paste
+  or choose it, then **Replace my data** to look around. Import it again with
+  **Replace** whenever you want to reset.
+- `sample-data/empty.json` — a pristine empty dataset, if you would rather start
+  from a file than from browser storage.
 
 The demo carries real dates, so its card ages grow and its Done lane empties out
 as the file sits in the repository. `node tools/make-example.js` regenerates it
 against today. Nothing about the app depends on this — it only affects how good
 the demo looks.
+
+### Where to put your real data
+
+Browser storage works and is the default, but it is a safety copy, not a backup:
+browsers evict it. In Chrome or Edge, open **Data → Create a new data file…**
+and put the file somewhere synced and outside the download folder —
+`OneDrive/Forefront/forefront-data.json` is the arrangement this was built for.
+Then Forefront writes straight through to it and you can move the app folder,
+reinstall, or switch machines without losing anything.
+
+In Firefox and Safari, use **Data → Download JSON** periodically instead; those
+browsers do not expose Chrome's write-to-a-chosen-file API.
+
+### Updating
+
+Download the ZIP again and replace the folder. Your data is not in it — it is in
+browser storage or in the data file you chose — so there is nothing to migrate.
 
 ---
 
@@ -104,12 +163,21 @@ the demo looks.
 
 ### Focus View — the default
 
-The three things you committed to, the date, and a way to write something down.
-That is deliberately all. Lane counts sit quietly at the bottom; the board is one
-click away when you actually want it.
+The three things you committed to, set large. A narrow column of five-minute
+chores beside them. The date, and a way to write something down. That is
+deliberately all — the counts at the bottom are for the lanes you *cannot* see,
+and the board is one click away when you actually want it.
 
-If you commit to more than three, Forefront shows them but mentions, once,
-that Focus works best with three. It will not nag you about it again.
+The **Just Do It** column is the one concession to work that is not a
+commitment, and it is fenced in on purpose: five rows, body-sized against the
+commitments' 30px, quiet colour, and "+N more on the board" instead of the
+rest. Chores belong on the home screen — they are what you do in the gaps
+between hard things — but a full lane of them would be a backlog, and the
+backlog is not the home screen. Tick one off without leaving Focus; press
+**Enter** on one to edit it.
+
+If a board arrives from a file carrying more than three commitments, Focus
+shows the top three and tells you how many to take out.
 
 ### Quick Capture
 
@@ -132,12 +200,24 @@ sixth column, because Inbox is a holding pen you empty, not a place work lives.
 | **Management** | Leading people, teams, the organisation. |
 | **Projects** | Substantive deliverables that need sustained thought. |
 | **Just Do It** | One obvious action, roughly five minutes or less. |
-| **In Progress** | What you have consciously committed to. About three. |
+| **In Progress** | What you have consciously committed to. Three, and it means it. |
 | **Done** | Recently finished, for closure. |
 
 **Just Do It is deliberately narrower and lighter.** A dozen five-minute chores
 are easier to look at than one hard strategy document, and without that
 handicap they would win every time.
+
+**In Progress holds three, and refuses a fourth.** Drag one in when it is full
+and Forefront stops, says so, and names the three that are in the way. It will
+not swap one out for you: deciding what stops being a commitment is the
+decision, and an app that makes it automatically has taken the only part that
+mattered. Finish something, or move it back to its lane, and then bring the new
+one in.
+
+This used to be a soft limit — a note that three works best, and no more than
+that. In Progress became a second backlog within a fortnight. If you want the
+old behaviour, set `ENFORCE_COMMITMENT_LIMIT` to `false` in
+[`js/constants.js`](js/constants.js).
 
 **There are no priority fields.** No high/medium/low, no P0, no stars, no flags.
 Position is priority — drag a card above another one, exactly as you would
@@ -284,9 +364,9 @@ Forefront reopens it automatically every time.
 The Data panel (`D`) always tells you, in plain words, which of these is
 actually in force right now. It does not guess and it does not over-promise.
 
-### Supported browsers on macOS
+### Supported browsers
 
-The support contract is the localhost URL opened by `start-mac.command`:
+The support contract is the localhost URL the launchers open:
 
 | Capability | Chrome | Firefox | Safari |
 |---|---|---|---|
@@ -557,6 +637,9 @@ In Firefox or Safari, export JSON there periodically instead. Only
 
 - **Use localhost for cross-browser support.** Direct `file://` behavior differs
   across Chrome, Firefox and Safari and is not the common supported setup.
+- **The launchers need Node.js or Python 3.** Neither ships with Windows. There
+  is no bundled runtime, because bundling one would mean a build step and a
+  platform-specific download, and this project has neither.
 - **Browser storage is shared with every other local file** you open, when
   running from `file://`. Connect a data file for anything confidential.
 - **Browser storage is evictable** — it is a safety copy, not a backup. Connect
@@ -601,6 +684,8 @@ forefront/
 │   ├── example.json      a populated demo board
 │   └── template.jsonc    the format, explained in comments, for assistants
 ├── start-mac.command     double-click launcher for macOS
+├── start-windows.cmd     double-click launcher for Windows
+├── start-linux.sh        launcher for Linux
 └── tools/                local server and development checks
 ```
 
