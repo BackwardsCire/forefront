@@ -679,7 +679,10 @@
 
     // Drop anything still queued for the file we are leaving. That payload is
     // the previous board; letting it drain after the switch would write it
-    // straight over the file we are connecting to.
+    // straight over the file we are connecting to. Bumping the generation also
+    // disowns a write already in flight, so the two guards — this one and
+    // writeHandle's handle check — cover the same hazard from both directions.
+    pendingGeneration++;
     if (writeTimer) { clearTimeout(writeTimer); writeTimer = null; }
     pendingJSON = null;
 

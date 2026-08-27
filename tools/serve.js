@@ -26,6 +26,11 @@ function safePath(urlPath) {
   let decoded;
   try { decoded = decodeURIComponent(urlPath); } catch (e) { return null; }
   const relative = decoded === '/' ? 'index.html' : decoded.replace(/^\/+/, '');
+  // Never serve dot-files or dot-directories. This serves the repository
+  // directory, which contains .git — and start-mac.command ships this to end
+  // users, who may well keep a real data file or a .env beside it. Loopback
+  // binding limits the audience to this machine; it does not make it fine.
+  if (relative.split('/').some(segment => segment.startsWith('.'))) return null;
   const resolved = path.resolve(ROOT, relative);
   return resolved === ROOT || resolved.startsWith(ROOT + path.sep) ? resolved : null;
 }
