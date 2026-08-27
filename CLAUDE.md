@@ -1,0 +1,174 @@
+# Working on Forefront
+
+Notes for whoever picks this up next, human or agent. Read this before changing
+anything; several decisions here look arbitrary and are not.
+
+## What this is
+
+An attention-management tool, not a task manager. It assumes the user already
+knows what they need to do. It exists to keep the few things they committed to
+visible, let them capture new obligations without breaking concentration, and
+force a weekly decision about what deserves attention.
+
+**The governing rule, and the tiebreaker for every ambiguous decision:**
+
+> The backlog is not the home screen.
+
+Opening Forefront should produce *"right, these are the things I said matter"* —
+never *"here are 37 things to feel guilty about."* If a change makes the backlog
+more present in Focus View, it is wrong regardless of how useful it seems.
+
+Six activities, deliberately kept apart:
+**Capture → Triage → Rank → Commit → Execute → Review.**
+
+## Non-goals — do not add these
+
+Not oversights. Each was considered and rejected. Adding one is a regression:
+
+priority fields · due dates · reminders · tags · labels · filters · search ·
+subtasks · dependencies · recurrence · time tracking · estimates · dashboards ·
+metrics · streaks/points/gamification · dark mode · accounts · auth · cloud
+sync · collaboration · a settings page · workspaces · plugins · notifications ·
+any third-party integration.
+
+Position within a lane **is** the priority, changed by dragging. There is no
+settings screen: every tunable lives in `js/constants.js`.
+
+If the board ever needs a query engine to stay usable, the product has drifted.
+
+## Architecture
+
+```
+index.html        entry point — opened directly from disk
+css/tokens.css    every colour, size, space. No literal colour lives elsewhere.
+css/styles.css    components
+js/constants.js   every tunable value (Done window, commitment count, keys…)
+js/model.js       data shape, validation, migration — pure, no DOM
+js/storage.js     browser storage + optional connected file
+js/ui.js          DOM helpers, dialogs, menus, banners
+js/dragdrop.js    pointer-based dragging
+js/focus.js       Focus View        js/board.js   Board View
+js/review.js      Monday ritual     js/data.js    Data panel
+js/app.js         shell: state, actions, keyboard, boot
+tools/            development only — never required to run the app
+```
+
+**No ES modules.** `<script type="module">` is fetched with CORS, and a page
+opened from `file://` has an opaque origin, so modules fail to load the moment
+someone double-clicks `index.html`. Everything is a classic deferred script
+hanging off one global `FF` namespace. Do not "modernise" this.
+
+**No build step, no dependencies, no network requests.** Not even fonts. The app
+must behave identically offline. Adding a CDN link or a `fetch()` breaks the
+core promise.
+
+**Views are pure renderers.** They never mutate the dataset; they call an action
+in `app.js`. That is what keeps "every change is saved, and the user is told
+when it isn't" true in one place instead of thirty.
+
+**Rendering is a full rebuild** of the current view on every change. Simple and
+fast enough at this scale. The only cost is restoring keyboard focus
+afterwards, which `restoreFocus()` handles.
+
+**Boot is synchronous first.** `storage.begin()` reads browser storage and
+returns immediately so the page paints in the same tick (~120ms from disk);
+`storage.resume()` then does everything asynchronous — probing IndexedDB,
+restoring a file handle, checking permission — and only redraws if it found
+something different. A browser start page must never show a blank frame.
+
+## Invariants
+
+- **No literal colours outside `css/tokens.css`.** Check:
+  `grep -E '#[0-9a-fA-F]{3,8}' css/styles.css` must return nothing.
+- **User text never reaches an HTML parser.** No `innerHTML`, no
+  `insertAdjacentHTML`. `ui.el()` sets `textContent`; there is deliberately no
+  `html` option. A card titled `<img onerror=…>` must stay a funny title.
+- **Every text token clears WCAG AA (4.5:1) against every surface it can land
+  on** — white, the page, the subtle surface, and all five weekly washes. Not
+  just against white. There is no sub-AA tier; an earlier draft had one
+  annotated "decoration only" and it immediately got used for dates, counts and
+  a button label. Quietness comes from size and weight.
+- **Completed work is never destroyed.** Done cards leave the board after
+  `DONE_VISIBLE_DAYS` but stay in the data forever. Discard is a soft state
+  (`discardedAt`) distinct from completion. Permanent deletion exists only in
+  the Data panel, behind a confirmation.
+- **The export is the whole application state.** Anything a user would be upset
+  to lose must be inside the exported JSON — that is why "Later" deferrals live
+  in `weeklyReviews[].deferrals` rather than in browser storage. The single
+  exception is the browser's file-permission handle, which cannot be serialised.
+- **Never silently overwrite.** If a connected file changed underneath us, stop
+  and ask. If what is on screen is newer than a file being loaded, stop and ask.
+  Both directions keep a recoverable backup.
+- **Storage failures are surfaced**, never hidden. A capture that could not be
+  saved leaves its dialog open with the text still in it.
+
+## Verified browser facts
+
+Measured against real Chrome, not assumed. Folklore is wrong about several of
+these, and the app runtime-detects rather than trusting any of it — but these
+are what the README documents, so re-measure before contradicting them.
+
+| | `file://` | `http://localhost` |
+|---|---|---|
+| localStorage (Chrome/Edge) | works | works |
+| localStorage (Safari) | **blocked**, throws SecurityError | works |
+| IndexedDB | **works** (~18ms round trip) | works |
+| File System Access incl. `createWritable` | works (Chrome/Edge) | works |
+| `navigator.storage.persist()` | refused — storage is evictable | refused |
+
+**All `file://` pages share ONE storage origin.** `location.origin` is the bare
+string `"file://"`, not one origin per path. Verified by writing from
+`/tmp/a/x.html` and reading it back from `~/b/y.html`. Consequences: moving the
+folder does *not* lose data (good), but any other local HTML file the user opens
+can read Forefront's keys (bad — the real reason to connect a data file).
+
+## Testing traps — read before debugging a test
+
+`tools/browsertest.js` drives the real `index.html` in headless Chrome. Headless
+Chrome under `--virtual-time-budget` lies in specific ways, and each of these
+cost real time to diagnose:
+
+- **`requestAnimationFrame` fires exactly once.** Anything rAF-driven appears
+  frozen. `dragdrop.js` throttles through rAF, so the drag test shims it to
+  `setTimeout` (`opts.shimRAF`).
+- **Real I/O appears to hang.** Virtual time fast-forwards a 1500ms timeout in
+  microseconds of wall clock, long before real disk I/O finishes. This is why
+  IndexedDB looked "blocked" on `file://` when it works fine. **For anything
+  touching real I/O or real elapsed time, use `tools/cdp.js`** — a minimal
+  DevTools-protocol client that evaluates JS in a real page on a real clock.
+- **`Date.now()` is virtual**, so timing measured inside the page is virtual too.
+- **Default headless window is 800×600.** The board is wider; without
+  `--window-size` the right-hand lanes fall outside the viewport,
+  `elementFromPoint` returns nothing, and drags land in the wrong lane.
+- **A synthetic `keydown` cannot dismiss a native `<dialog>`.** Escape handling
+  is UA behaviour driven by real input. Dispatch a cancelable `cancel` event
+  instead — see `escapeDialog()`.
+- **Headless matches `@media (hover: none)`**, so hover-revealed card controls
+  render visible in screenshots. That is the touch variant, not the desktop one.
+
+```bash
+node tools/selftest.js        # model: ordering, ages, review logic, validation
+node tools/check-samples.js   # samples valid; empty.json matches createEmptyData()
+node tools/browsertest.js     # real index.html in headless Chrome
+node tools/crossbrowsertest.js firefox|safari   # WebDriver smoke test
+node tools/make-example.js    # regenerate example.json with fresh dates
+node tools/screenshot.js DIR  # render views to PNGs
+node tools/serve.js --open    # localhost origin (required for Safari)
+```
+
+`sample-data/empty.json` must stay structurally identical to
+`model.createEmptyData()`. They are kept in step by hand because a `file://`
+page cannot `fetch()` an adjacent file, so the app can never read that JSON at
+runtime. `check-samples.js` is what stops them drifting.
+
+## Privacy
+
+The application code is public. The user's real task data must never be — it
+contains colleagues' names, company and project information. `.gitignore`
+covers the obvious filenames; the intended arrangement is a data file kept
+entirely outside the repo (a OneDrive folder), connected through the Data panel.
+
+**Do not put the repository owner's real name anywhere** — not in LICENSE, not
+in comments, not in commit metadata. The project is published under the handle
+`BackwardsCire`. Git is configured with a GitHub noreply address; keep it that
+way.
