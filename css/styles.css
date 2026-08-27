@@ -96,7 +96,7 @@ kbd {
               color var(--dur-fast) var(--ease),
               border-color var(--dur-fast) var(--ease);
 }
-.btn:hover { background: var(--bg-surface-subtle); color: var(--text-primary); }
+.btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .btn:disabled { opacity: 0.4; cursor: default; }
 .btn:disabled:hover { background: transparent; color: var(--text-secondary); }
 
@@ -125,6 +125,20 @@ kbd {
 
 .btn--small { padding: 0.25rem 0.6rem; font-size: var(--size-xs); }
 
+/* A square button holding one 16-unit glyph. Used by the theme control, which
+   sits in the same row as Data and Shortcuts and must not out-shout them. */
+.btn--icon { padding: 0.4rem; }
+.btn--icon .icon { width: 1rem; height: 1rem; }
+
+/* Icons inherit colour and are sized by whatever contains them. The two older
+   tick call-sites set their own size and still win on specificity. */
+.icon {
+  display: block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+}
+
 .link {
   padding: 0;
   border: 0;
@@ -146,6 +160,9 @@ kbd {
    ================================================================== */
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--size-xs);
   font-weight: var(--weight-semi);
   letter-spacing: var(--tracking-wider);
@@ -156,6 +173,15 @@ kbd {
   padding: 0; border: 0; background: none; cursor: pointer;
 }
 .wordmark--button:hover { color: var(--accent-primary); }
+
+/* The mark carries the weekly accent while the word stays muted. It is the
+   one place the rotation is allowed to be the brightest thing on screen, and
+   at 14px that is still very quiet. */
+.wordmark__mark {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--accent-primary);
+}
 
 /* ==================================================================
    Focus View
@@ -375,7 +401,7 @@ body[data-view="focus"] {
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease);
 }
-.count:hover { background: var(--bg-surface-subtle); }
+.count:hover { background: var(--bg-hover); }
 .count__label { font-size: var(--size-xs); color: var(--text-muted); }
 .count__value {
   font-size: var(--size-xs);
@@ -683,7 +709,7 @@ body[data-view="focus"] {
 .card__done:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
 
 .card__menu { width: 1.3rem; height: 1.3rem; border-radius: var(--radius-sm); letter-spacing: 0.05em; }
-.card__menu:hover { color: var(--text-secondary); background: var(--bg-surface-subtle); }
+.card__menu:hover { color: var(--text-secondary); background: var(--bg-hover); }
 
 .card:hover .card__done,
 .card:hover .card__menu,
@@ -923,7 +949,7 @@ body.is-dragging .card { cursor: grabbing; }
 }
 .edit__title { font-size: var(--size-lg); margin-bottom: var(--space-3); }
 .edit__notes { font-size: var(--size-sm); line-height: var(--leading-normal); resize: vertical; }
-.edit__title:focus, .edit__notes:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-wash); }
+.edit__title:focus, .edit__notes:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--ring); }
 
 /* ---- Help ---- */
 
@@ -1063,9 +1089,20 @@ body.is-dragging .card { cursor: grabbing; }
   color: var(--text-primary);
   cursor: pointer;
 }
-.menu__item:hover, .menu__item:focus-visible { background: var(--bg-surface-subtle); outline-offset: -2px; }
+.menu__item:hover, .menu__item:focus-visible { background: var(--bg-hover); outline-offset: -2px; }
 .menu__item--danger { color: var(--danger); }
 .menu__item--danger:hover { background: var(--danger-wash); }
+
+/* Radio rows. The gutter is always there, on every row of such a menu, so the
+   labels stay on one vertical line instead of shuffling as the choice moves. */
+.menu__item--checkable { display: flex; align-items: center; gap: var(--space-2); }
+.menu__check {
+  display: flex;
+  flex: none;
+  width: 0.8rem;
+  color: var(--accent-primary);
+}
+.menu__check .icon { width: 0.8rem; height: 0.8rem; }
 .menu__sep { height: 1px; margin: var(--space-1) var(--space-2); background: var(--border-subtle); }
 .menu__heading {
   padding: var(--space-2) var(--space-3) var(--space-1);

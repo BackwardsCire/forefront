@@ -49,6 +49,11 @@ FF.C = {
   CAPTURE_KEY: 'n',
   CAPTURE_KEY_LABEL: 'N',
 
+  /** Step the theme on one: Match system → Light → Dark → Match system. The
+   *  header control offers the same three directly; this is for the hands. */
+  THEME_KEY: 't',
+  THEME_KEY_LABEL: 'T',
+
   /** Pixels the pointer must travel before a press becomes a drag. Below this
    *  it stays a click, so clicking and double-clicking a card still work. */
   DRAG_THRESHOLD_PX: 5,
@@ -57,6 +62,13 @@ FF.C = {
 
   LS_KEY: 'forefront.data.v1',
   LS_BACKUP_KEY: 'forefront.backup.v1',
+
+  /** Light/dark/system. Deliberately its own key rather than a field in the
+   *  dataset: which theme suits the room you are in is not part of your work,
+   *  and putting it in the data would rewrite the connected file every time
+   *  someone flicked the switch. Also hard-coded in the inline script at the
+   *  top of index.html — change it in both places or not at all. */
+  LS_THEME_KEY: 'forefront.theme.v1',
   IDB_NAME: 'forefront',
   IDB_STORE: 'handles',
 

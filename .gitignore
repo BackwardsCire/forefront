@@ -13,12 +13,15 @@
 # ---------------------------------------------------------------
 forefront-data.json
 forefront-*.json
+forefront-*.jsonc
 *.forefront.json
+*.forefront.jsonc
 data/
 my-data/
 private/
 !sample-data/
 !sample-data/*.json
+!sample-data/*.jsonc
 
 # Scratch files from the dev tools
 _browsertest.*.tmp.html

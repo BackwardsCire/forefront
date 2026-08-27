@@ -28,12 +28,24 @@ const SHOTS = [
     setup: `click(document.querySelectorAll('.review-prompt__actions .btn')[0]); await until(()=>document.querySelector('.rail'));` },
   { name: 'data-panel',   w: 1920, h: 1080, setup: `key(document.body,'d'); await until(()=>document.querySelector('.data-panel'));` },
   { name: 'focus-empty',  w: 1920, h: 1080, empty: true, setup: '' },
+
+  // Dark. Same views, same data, only the token block differs — which is the
+  // point, and the reason these are worth rendering rather than trusting.
+  { name: 'focus-dark',   w: 1920, h: 1080, theme: 'dark', setup: '' },
+  { name: 'board-dark',   w: 1920, h: 1080, theme: 'dark',
+    setup: `key(document.body,'b'); await until(()=>document.querySelector('.board'));` },
+  { name: 'capture-dark', w: 1920, h: 1080, theme: 'dark',
+    setup: `key(document.body,'n'); await until(()=>document.querySelector('.capture__input'));
+      document.querySelector('.capture__input').value='Ask Mike whether contractor extensions are in Q4 funding';` },
+  { name: 'data-dark',    w: 1920, h: 1080, theme: 'dark',
+    setup: `key(document.body,'d'); await until(()=>document.querySelector('.data-panel'));` },
 ];
 
 for (const shot of SHOTS) {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'ff-shot-'));
   const seed = `<script>
-    try { localStorage.clear(); ${shot.empty ? '' : `localStorage.setItem('forefront.data.v1', ${JSON.stringify(example)});`} } catch(e){}
+    try { localStorage.clear(); ${shot.empty ? '' : `localStorage.setItem('forefront.data.v1', ${JSON.stringify(example)});`}
+      ${shot.theme ? `localStorage.setItem('forefront.theme.v1', ${JSON.stringify(shot.theme)});` : ''} } catch(e){}
     ${shot.now ? `(function(){var F=new Date(${JSON.stringify(shot.now)}).getTime(),R=Date;
       function D(...a){if(!(this instanceof D))return new R(F).toString();return a.length?new R(...a):new R(F);}
       D.prototype=R.prototype;D.now=()=>F;D.parse=R.parse;D.UTC=R.UTC;window.Date=D;})();` : ''}

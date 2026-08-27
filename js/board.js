@@ -46,10 +46,13 @@
   function renderHeader(actions) {
     return el('header', { class: 'board__header' }, [
       el('button', {
-        type: 'button', class: 'wordmark wordmark--button', text: 'Forefront',
+        type: 'button', class: 'wordmark wordmark--button',
         title: 'Back to Focus', 'aria-label': 'Back to Focus',
         onclick: actions.showFocus
-      }),
+      }, [
+        ui.icon('mark', 'wordmark__mark'),
+        el('span', { text: 'Forefront' })
+      ]),
       el('div', { class: 'board__actions' }, [
         el('button', { type: 'button', class: 'btn btn--quiet', 'data-capture-trigger': '', onclick: actions.capture }, [
           el('span', { 'aria-hidden': 'true', text: '+ ' }),
@@ -57,7 +60,8 @@
         ]),
         el('button', { type: 'button', class: 'btn btn--primary', text: 'Focus', onclick: actions.showFocus }),
         el('button', { type: 'button', class: 'btn btn--faint', text: 'Data', onclick: actions.openData }),
-        el('button', { type: 'button', class: 'btn btn--faint', text: 'Shortcuts', onclick: actions.showHelp })
+        el('button', { type: 'button', class: 'btn btn--faint', text: 'Shortcuts', onclick: actions.showHelp }),
+        ui.themeControl(actions.rerender)
       ])
     ]);
   }

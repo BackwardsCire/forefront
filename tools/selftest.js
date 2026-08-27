@@ -210,6 +210,91 @@ const v4 = M.validateData({ schemaVersion:1, meta:{}, cards:[
 eq('validate: completedAt implies done lane', v4.data.cards.find(c=>c.id==='a').lane, 'done');
 eq('validate: done lane implies completedAt', v4.data.cards.find(c=>c.id==='b').completedAt, '2026-01-03T00:00:00.000Z');
 
+// ---- lane names as people write them ----
+eq('lane: id',            M.resolveLane('inprogress'), 'inprogress');
+eq('lane: label',         M.resolveLane('In Progress'), 'inprogress');
+eq('lane: hyphenated',    M.resolveLane('in-progress'), 'inprogress');
+eq('lane: synonym',       M.resolveLane('doing'), 'inprogress');
+eq('lane: just do it',    M.resolveLane('Just Do It'), 'justdoit');
+eq('lane: shouty',        M.resolveLane('  JUSTDOIT  '), 'justdoit');
+eq('lane: unknown',       M.resolveLane('someday maybe'), null);
+eq('lane: ambiguous word stays unknown', M.resolveLane('todo'), null);
+eq('lane: not a string',  M.resolveLane(3), null);
+
+// ---- comments and trailing commas ----
+const relaxed = M.relaxJSON(`{
+  // a line comment
+  "a": 1, /* and a block one */
+  "b": [1, 2, 3,],
+}`);
+ok('relax: reports that it changed something', relaxed.changed);
+eq('relax: parses afterwards', JSON.parse(relaxed.text), { a: 1, b: [1, 2, 3] });
+
+const urlish = '{"title":"see https://example.com // not a comment","n":1}';
+eq('relax: leaves // inside a string alone', JSON.parse(M.relaxJSON(urlish).text).title,
+   'see https://example.com // not a comment');
+ok('relax: reports no change to plain JSON', M.relaxJSON(urlish).changed === false);
+eq('relax: leaves an escaped quote alone',
+   JSON.parse(M.relaxJSON('{"t":"a \\" b // c"}').text).t, 'a " b // c');
+
+ok('parseLoose: plain JSON needs no tolerance', M.parseLoose('{"a":1}').tolerated.length === 0);
+ok('parseLoose: commented JSON is read', M.parseLoose('// hi\n{"a":1}').ok);
+ok('parseLoose: and says it was tolerated', M.parseLoose('// hi\n{"a":1}').tolerated.length === 1);
+ok('parseLoose: rubbish still fails', M.parseLoose('{not json at all').ok === false);
+ok('parseLoose: failure explains itself', /not readable as JSON/.test(M.parseLoose('{{{').error));
+
+// ---- looser shapes an assistant might produce ----
+const bare = M.readAny('["Call the vendor back", "Book the offsite room"]');
+ok('readAny: a bare list of titles is a valid file', bare.ok);
+eq('readAny: both became cards', bare.data.cards.map(c => c.title),
+   ['Call the vendor back', 'Book the offsite room']);
+eq('readAny: and landed in Inbox', bare.data.cards.map(c => c.lane), ['inbox', 'inbox']);
+
+const grouped = M.readAny(`{
+  // stickies, sorted
+  "Just Do It": ["Book the room"],
+  "in progress": [{ "title": "Finish the draft", "note": "sections 1-3 done" }]
+}`);
+ok('readAny: lane-keyed groups are accepted', grouped.ok);
+eq('readAny: group name resolved to a lane',
+   grouped.data.cards.find(c => c.title === 'Book the room').lane, 'justdoit');
+eq('readAny: singular "note" is read as notes',
+   grouped.data.cards.find(c => c.title === 'Finish the draft').notes, 'sections 1-3 done');
+ok('readAny: every card got an id', grouped.data.cards.every(c => typeof c.id === 'string' && c.id));
+
+const spelled = M.readAny('{"cards":[{"title":"x","lane":"In Progress"}]}');
+eq('readAny: a written-out lane name is understood', spelled.data.cards[0].lane, 'inprogress');
+ok('readAny: and says so', spelled.warnings.some(w => /read as In Progress/.test(w)));
+
+// ---- adding rather than replacing ----
+const board = M.createEmptyData();
+M.addCard(board, 'already here', 'projects');
+const incoming = M.readAny('[{"title":"new one","lane":"projects"},{"title":"already here","lane":"projects"}]');
+const merged = M.mergeCards(board, incoming.data.cards);
+eq('merge: both added', merged.added, 2);
+eq('merge: existing card is still on top',
+   M.laneCards(board, 'projects').map(c => c.title), ['already here', 'new one', 'already here']);
+eq('merge: duplicate title reported', merged.duplicates, ['already here']);
+eq('merge: orders stay dense', M.laneCards(board, 'projects').map(c => c.order), [0, 1, 2]);
+
+const collide = M.createEmptyData();
+const mine = M.addCard(collide, 'mine', 'projects');
+M.mergeCards(collide, [{ id: mine.id, title: 'theirs', lane: 'projects', order: 0,
+                         createdAt: M.nowISO(), updatedAt: M.nowISO(), notes: '' }]);
+eq('merge: two cards after an id collision', collide.cards.length, 2);
+ok('merge: the colliding id was regenerated', collide.cards[0].id !== collide.cards[1].id);
+
+// ---- the annotated file reads back in ----
+const annotated = M.annotate(d);
+ok('annotate: is not valid JSON on its own', (() => {
+  try { JSON.parse(annotated); return false; } catch (e) { return true; }
+})());
+const readBack = M.readAny(annotated);
+ok('annotate: but Forefront reads it', readBack.ok);
+eq('annotate: same cards', readBack.data.cards.map(c => c.id), d.cards.map(c => c.id));
+eq('annotate: same reviews', readBack.data.weeklyReviews.length, d.weeklyReviews.length);
+ok('annotate: carries the format guide', annotated.indexOf('// THE LANES') !== -1);
+
 // ---- round trip ----
 const rt = M.validateData(JSON.parse(M.serialize(d)));
 ok('roundtrip: valid', rt.ok);

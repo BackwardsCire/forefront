@@ -44,6 +44,35 @@ for (const file of ['empty.json', 'example.json']) {
   check('identifies itself as Forefront', parsed.app === FF.C.APP_NAME);
 }
 
+console.log('\ntemplate.jsonc');
+{
+  const p = path.join(root, 'sample-data', 'template.jsonc');
+  const { build } = require('./make-template.js');
+
+  if (!fs.existsSync(p)) {
+    check('exists', false, 'run: node tools/make-template.js');
+  } else {
+    const text = fs.readFileSync(p, 'utf8');
+
+    check('is annotated, so it is deliberately not plain JSON', (() => {
+      try { JSON.parse(text); return false; } catch (e) { return true; }
+    })(), 'template.jsonc parsed as strict JSON — its comments have been lost');
+
+    const res = M.readAny(text);
+    check('imports', res.ok, (res.errors || []).join('; '));
+    check('nothing rejected', res.ok && res.rejected.length === 0, (res.rejected || []).join('; '));
+    check('every example card kept its lane', res.ok &&
+      res.data.cards.every(c => c.lane !== 'inbox' || /Replace these three/.test(c.title)));
+    check('demonstrates the minimum: a card needs only a title and a lane',
+      /\{"title":"[^"]+","lane":"[a-z]+"\}/.test(text));
+
+    // Generated, not hand-written: if the format guide or the writer changes,
+    // the shipped file has to be regenerated or it starts lying.
+    check('is up to date with model.annotate()', text === build(),
+      'run: node tools/make-template.js');
+  }
+}
+
 console.log('\nempty.json vs createEmptyData()');
 const onDisk = JSON.parse(fs.readFileSync(path.join(root, 'sample-data', 'empty.json'), 'utf8'));
 const inCode = M.createEmptyData();

@@ -49,7 +49,10 @@
 
   function renderHeader(data, actions) {
     return el('header', { class: 'focus__header' }, [
-      el('p', { class: 'wordmark', text: 'Forefront' }),
+      el('p', { class: 'wordmark' }, [
+        ui.icon('mark', 'wordmark__mark'),
+        el('span', { text: 'Forefront' })
+      ]),
       el('p', { class: 'focus__date', text: ui.formatToday() })
     ]);
   }
@@ -156,27 +159,20 @@
         el('button', {
           type: 'button', class: 'btn btn--faint', text: 'Shortcuts',
           onclick: actions.showHelp
-        })
+        }),
+        ui.themeControl(actions.rerender)
       ])
     ]);
   }
 
-  /** A hand-drawn tick, so no icon font or image file is needed. */
-  function tick() {
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 16 16');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('focusable', 'false');
-    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', 'M3.5 8.5 L6.5 11.5 L12.5 4.5');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', 'currentColor');
-    path.setAttribute('stroke-width', '1.75');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('stroke-linejoin', 'round');
-    svg.appendChild(path);
-    return svg;
-  }
+  /**
+   * A hand-drawn tick, so no icon font or image file is needed.
+   *
+   * The drawing itself moved to ui.icon when the theme control needed a tick
+   * for its menu; this stays as the name the rest of the app already calls,
+   * rather than having two ticks that can drift apart.
+   */
+  function tick() { return ui.icon('tick'); }
 
   FF.focus = { render: render, tick: tick };
 })(window.FF);

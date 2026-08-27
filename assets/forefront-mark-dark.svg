@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Forefront">
+  <title>Forefront</title>
+  <!--
+    Three cards seen edge-on: the foremost solid and full height, the two
+    behind it shorter, narrower and fading out. One thing is in front at full
+    strength; the rest are clearly still there and just as clearly not what you
+    are being asked to look at.
+
+    Standalone copy of ui.icon('mark') in js/ui.js, at twice the coordinates.
+    That one paints in currentColor; this one has to name a colour, because a
+    file GitHub renders cannot inherit anything. The value is --accent-primary
+    (slate) from the dark block of css/tokens.css. There is a light-background companion beside
+    this file — see forefront-mark.svg.
+  -->
+  <rect x="27" y="10" width="3" height="12" rx="1.25" fill="#8ba9d0" fill-opacity="0.3"/>
+  <rect x="20" y="7" width="5" height="18" rx="2" fill="#8ba9d0" fill-opacity="0.55"/>
+  <rect x="2" y="4" width="16" height="24" rx="3" fill="#8ba9d0"/>
+</svg>

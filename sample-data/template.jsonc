@@ -1,0 +1,70 @@
+// Forefront data file.
+//
+// Forefront is an attention-management board. Everything it knows is in this
+// one file. It can be edited by hand or generated wholesale — the importer
+// checks everything, repairs what it can, and reports the rest, so an
+// imperfect file is safe to try.
+//
+// Comments like this one are allowed. Strict JSON has none, so Forefront
+// strips them on the way in. Trailing commas are forgiven too.
+//
+// THE LANES, left to right on the board:
+//
+//   inbox        Just captured. Not yet decided. Empty this by dragging.
+//   management   Running a team: reviews, staffing, vendors, the org.
+//   projects     Substantial work with a shape to it.
+//   justdoit     Under about five minutes. Kept narrow on purpose so a pile
+//                of small chores cannot outrank one hard thing.
+//   inprogress   Committed to. The top three of these ARE the home screen.
+//   done         Finished. Leaves the board after a few days, is never
+//                deleted.
+//
+// Lane names are matched loosely: "In Progress", "in-progress" and "doing"
+// all mean inprogress. Anything unrecognised lands in inbox rather than
+// being guessed at.
+//
+// THERE IS NO priority field, due date, tag, estimate, subtask or
+// recurrence, and adding one to this file will not create one. Priority is
+// position: within a lane, "order" ascending is most-important first.
+//
+// A CARD needs nothing but a title. Everything else is filled in for you:
+//
+//   title        required. Plain text.
+//   lane         one of the six above. Defaults to inbox.
+//   notes        optional. A sentence or two of detail, not a document.
+//   order        position within the lane, ascending. Defaults to the order
+//                the cards appear in this file.
+//   id           a unique string. Generated if missing.
+//   createdAt    ISO 8601. Defaults to now, which restarts the card's age.
+//   completedAt  ISO 8601, and only for cards in done.
+//   discardedAt  ISO 8601. Set means "dropped without doing it" — a soft
+//                state, kept forever, distinct from completed.
+//
+// THE SMALLEST USEFUL FILE is a bare list of titles:
+//
+//   ["Call the vendor back", "Book the offsite room"]
+//
+// They arrive in Inbox to be triaged. Grouping by lane also works:
+//
+//   { "inbox": ["Call the vendor back"], "Just Do It": ["Book the room"] }
+//
+// Unrecognised fields are preserved untouched, so notes an assistant leaves
+// for itself survive a round trip.
+
+{
+  "schemaVersion": 1,
+  "app": "Forefront",
+  "meta": {"createdAt":"2026-01-05T09:00:00.000Z","updatedAt":"2026-01-05T09:00:00.000Z"},
+
+  // One flat list. The lane field says where a card sits; the order
+  // field says how far up. Cards in "done" are history, not work.
+  "cards": [
+    {"title":"Replace these three with your own","lane":"inbox"},
+    {"title":"Something you could finish in five minutes","lane":"justdoit"},
+    {"title":"The one thing you have actually committed to","lane":"inprogress","notes":"Position is priority. The top three cards in this lane are the home screen."}
+  ],
+
+  // One entry per Monday you were offered the weekly review, whether or
+  // not you did it. Safe to leave empty in a file you are generating.
+  "weeklyReviews": []
+}

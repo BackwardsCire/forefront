@@ -40,6 +40,14 @@
 
   function boot() {
     root = document.getElementById('app');
+
+    // The inline script in index.html already put the theme on <html> before
+    // the first paint. This picks up the same preference, and adds the live
+    // listener so that a machine switching to dark at sunset switches the app
+    // with it — a start page can sit open for days.
+    FF.theme.init();
+    FF.theme.onChange(function () { if (root.firstChild) render(); });
+
     applyWeeklyAccent();
 
     FF.storage.on('conflict', onFileConflict);
@@ -698,6 +706,27 @@
   }
 
   /**
+   * Add someone else's cards to the board rather than replacing it.
+   *
+   * Still takes a backup. Adding forty cards from a file you did not read
+   * carefully is not destructive in principle and is very annoying in
+   * practice, and "undo" here means "recover the previous dataset" in the
+   * Data panel — which only exists if a copy was kept.
+   */
+  function adoptMerged(cards) {
+    backupCurrent();
+    var result = model.mergeCards(state.data, cards);
+    commit();
+
+    var message = result.added + (result.added === 1 ? ' card added' : ' cards added');
+    if (result.duplicates.length) {
+      message += ' — ' + result.duplicates.length +
+        (result.duplicates.length === 1 ? ' has' : ' have') + ' a title already in that lane';
+    }
+    ui.toast(message, 'ok');
+  }
+
+  /**
    * Keep the outgoing dataset where it can be recovered. Never blocks the
    * operation it precedes — but if it could not be kept, say so, because the
    * UI has just told the user a copy was being kept.
@@ -734,9 +763,23 @@
       else if (key === 'b') { e.preventDefault(); state.view === 'board' ? showFocus() : showBoard(); }
       else if (key === 'f') { e.preventDefault(); showFocus(); }
       else if (key === 'd') { e.preventDefault(); openData(); }
+      else if (key === C.THEME_KEY) { e.preventDefault(); cycleTheme(); }
       else if (key === '?') { e.preventDefault(); showHelp(); }
       else if (e.key === 'Escape' && state.view === 'board') { e.preventDefault(); showFocus(); }
     });
+  }
+
+  /**
+   * Step the theme on, and say which one you landed in.
+   *
+   * The toast is not decoration: the key cycles three states, and going from
+   * "Match system" to "Light" on a machine that is already light changes
+   * nothing on screen at all. Without the toast that reads as a broken key.
+   */
+  function cycleTheme() {
+    FF.theme.cycle();
+    render();
+    ui.toast('Theme: ' + FF.theme.describe(), 'info');
   }
 
   function showHelp() {
@@ -745,6 +788,7 @@
       ['B', 'Board / Focus'],
       ['F', 'Focus'],
       ['D', 'Data'],
+      [C.THEME_KEY_LABEL, 'Light / dark / match system'],
       ['?', 'This list'],
       ['Esc', 'Close, or leave the board'],
       ['Enter', 'Edit the focused card'],
@@ -861,6 +905,7 @@
     getData: function () { return state.data; },
     adoptFromFile: adoptFromFile,
     adoptImported: adoptImported,
+    adoptMerged: adoptMerged,
     reconnectFile: reconnectFile,
     restore: restore,
     deleteForever: deleteForever,

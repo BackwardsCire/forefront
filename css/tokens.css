@@ -6,11 +6,15 @@
  * different professional palette should mean editing this file and nothing
  * else.
  *
- * Light only. There is no dark mode, by design.
+ * Two themes: light, and the dark block near the foot of this file. Every token
+ * that carries colour is defined in both. Nothing else about the app changes —
+ * no layout, no type, no hierarchy — so a screenshot of one is the other with
+ * the lights off.
  *
  * Contrast: every text token clears WCAG AA (4.5:1) against EVERY surface it
- * can land on — white, the page, the subtle surface, and all five weekly
- * washes — not merely against white. Worst case of that set:
+ * can land on — white, the page, the subtle surface, the hover fill, the two
+ * meaning washes and all five weekly washes — not merely against white. Worst
+ * case of that set, in light:
  *
  *   --text-primary    #172033   14.6:1
  *   --text-secondary  #475569    6.8:1
@@ -21,14 +25,28 @@
  * "decoration only, never information", and then used it for dates, counts,
  * hints and a button label — which is how that kind of token always ends up
  * being used. Quietness here comes from size and weight instead.
+ *
+ * Two themes × five accent families × every surface is several hundred pairs,
+ * which is more than anyone will re-check by hand after nudging one hex, so it
+ * is checked mechanically:  node tools/check-contrast.js
  */
 
 :root {
+  /* Tells the browser to render form controls, scrollbars and the <dialog>
+     backdrop to match. Without it, dark mode has light scrollbars. */
+  color-scheme: light;
+
   /* ---- Surfaces ---------------------------------------------------- */
   --bg-page:           #f6f7f9;
   --bg-surface:        #ffffff;
   --bg-surface-subtle: #f1f3f6;
   --bg-overlay:        rgba(23, 32, 51, 0.28);
+
+  /* The fill under a hovered button, count or menu row. Separate from
+     --bg-surface-subtle, which it matches exactly here, because the two want
+     opposite things in dark: a recessed panel goes darker, a hover goes
+     lighter. Sharing one token made hovering a card's menu row dim it. */
+  --bg-hover:          #f1f3f6;
 
   /* ---- Text -------------------------------------------------------- */
   --text-primary:   #172033;
@@ -50,6 +68,11 @@
   --border-subtle:  #e3e8ee;
   --border-muted:   #d3dae3;
   --border-strong:  #b8c2ce;
+
+  /* The soft halo on a focused text field. Kept out of the weekly rotation:
+     it is three translucent pixels and nobody will ever notice it change hue,
+     but every family would need a value and one of them would drift. */
+  --ring:           rgba(63, 90, 125, 0.16);
   --shadow-card:    0 1px 2px rgba(23, 32, 51, 0.05);
   --shadow-raised:  0 2px 5px rgba(23, 32, 51, 0.07);
   --shadow-drag:    0 10px 26px rgba(23, 32, 51, 0.16);
@@ -157,4 +180,119 @@
   --accent-strong:    #3b424c;
   --accent-secondary: #6b3350;
   --focus-wash:       #faf4f7;
+}
+
+/* ==================================================================
+   Dark
+   ==================================================================
+
+   `data-theme` on <html> always holds the RESOLVED theme — "light" or "dark",
+   never "system". js/theme.js resolves the preference, and an inline script in
+   index.html sets the attribute before the first paint. That is why there is
+   no `@media (prefers-color-scheme: dark)` copy of this block: duplicating a
+   palette this size is how the two halves drift apart.
+
+   Three things are genuinely different here, rather than inverted:
+
+   1. Elevation comes from surface lightness, not shadow. A card is LIGHTER
+      than the page; on light it is white against grey and lifted by a shadow.
+      The shadows below still exist, but they are near-black and doing much
+      less work.
+   2. --text-inverse is dark. A primary button in dark mode is a light accent
+      with dark text on it, which is the only way to keep a filled control
+      readable without a fluorescent blue.
+   3. Neither end is pure. The page is not #000 and the brightest text is not
+      #fff: maximum contrast on a large dark field produces halation, where
+      light text visibly bleeds into the background. Roughly 14:1 rather than
+      21:1 is more comfortable to read for an hour and still clears AA twice
+      over.                                                                   */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ---- Surfaces ---------------------------------------------------- */
+  --bg-page:           #14171e;
+  --bg-surface:        #1c212b;
+  --bg-surface-subtle: #181c24;
+  --bg-hover:          #272d39;
+  --bg-overlay:        rgba(5, 7, 11, 0.66);
+
+  /* ---- Text -------------------------------------------------------- */
+  --text-primary:   #e7ecf4;
+  --text-secondary: #b8c2d1;
+  --text-muted:     #a3aebe;
+  --text-faint:     #939fb1;
+  --text-inverse:   #12151c;
+
+  /* ---- Accents ----------------------------------------------------- */
+  --accent-primary:   #8ba9d0;
+  --accent-strong:    #a9c0e0;
+  --accent-secondary: #d69dab;
+  --focus-wash:       #181d27;
+
+  /* ---- Lines and depth --------------------------------------------- */
+  --border-subtle:  #262c37;
+  --border-muted:   #323a47;
+  --border-strong:  #4b5666;
+  --shadow-card:    0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-raised:  0 2px 6px rgba(0, 0, 0, 0.46);
+  --shadow-drag:    0 12px 30px rgba(0, 0, 0, 0.58);
+  --shadow-dialog:  0 20px 54px rgba(0, 0, 0, 0.62);
+  --ring:           rgba(139, 169, 208, 0.24);
+
+  /* ---- Meaning ----------------------------------------------------- */
+  --danger:      #ef9aa4;
+  --danger-wash: #2b191d;
+  --ok:          #7cc9a2;
+  --warn:        #e2b45f;
+  --warn-wash:   #2a2214;
+}
+
+/**
+ * The weekly accent families again, in dark.
+ *
+ * Specificity does the work: [data-accent="x"] is one attribute selector,
+ * :root[data-theme="dark"] is two, and :root[data-theme="dark"][data-accent="x"]
+ * is three — so the light weekly block never leaks into dark, whatever order
+ * the attributes end up in.
+ *
+ * Same rule as the light set: hue moves, hierarchy does not. Each family's
+ * --accent-primary is bright enough to be link text on the darkest surface and
+ * to carry dark --text-inverse when it is a button fill, and each --focus-wash
+ * is a lift of about one step above --bg-page — felt rather than seen.
+ */
+
+:root[data-theme="dark"][data-accent="slate"] {
+  --accent-primary:   #8ba9d0;
+  --accent-strong:    #a9c0e0;
+  --accent-secondary: #d69dab;
+  --focus-wash:       #181d27;
+}
+
+:root[data-theme="dark"][data-accent="steel"] {
+  --accent-primary:   #7cadc8;
+  --accent-strong:    #9dc5da;
+  --accent-secondary: #d69dab;
+  --focus-wash:       #161d23;
+}
+
+:root[data-theme="dark"][data-accent="navy"] {
+  --accent-primary:   #97a7da;
+  --accent-strong:    #b2bfe8;
+  --accent-secondary: #d398bd;
+  --focus-wash:       #181b2a;
+}
+
+:root[data-theme="dark"][data-accent="maroon"] {
+  --accent-primary:   #a3b0c6;
+  --accent-strong:    #bcc6d7;
+  --accent-secondary: #dc9ba5;
+  --focus-wash:       #1f1b1d;
+}
+
+:root[data-theme="dark"][data-accent="burgundy"] {
+  --accent-primary:   #a9b0bc;
+  --accent-strong:    #c2c8d1;
+  --accent-secondary: #d398bd;
+  --focus-wash:       #1f1a23;
 }

@@ -1,6 +1,16 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/forefront-mark-dark.svg">
+  <img src="assets/forefront-mark.svg" alt="" width="64" height="64">
+</picture>
+
 # Forefront
 
 **Keep what matters in front of you.**
+
+<sub>The mark is three cards seen edge-on: the foremost solid and at full
+height, the two behind it shorter, narrower and fading out. One thing is in
+front at full strength; the rest are clearly still there and just as clearly
+not what you are being asked to look at.</sub>
 
 Forefront is an attention-management tool, not a task manager. It assumes you
 already know what you need to do. The problem it solves is the other one:
@@ -55,7 +65,7 @@ never *"here are 37 things to feel guilty about."*
 ## Running it
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/BackwardsCire/forefront.git
 cd forefront
 ```
 
@@ -205,6 +215,7 @@ into Focus. The backlog disappears again.
 | `B` | Board / Focus |
 | `F` | Focus |
 | `D` | Data panel |
+| `T` | Light / dark / match system |
 | `?` | Shortcut list |
 | `Esc` | Close an overlay, or leave the board |
 | `Enter` | Edit the focused card or commitment |
@@ -223,6 +234,39 @@ done, edit and discard — so nothing needs a mouse, and nothing needs a drag.
 Focus View is deliberately barer: a commitment can be opened with `Enter` and
 completed with the control that appears beside it, and reordering happens on the
 board where it belongs.
+
+---
+
+## Light and dark
+
+Forefront follows your operating system by default. The small disc in the
+footer — and in the board header — opens three choices: **Match system**,
+**Light**, **Dark**. `T` steps through the same three.
+
+Three states rather than a switch, because a two-state toggle is a one-way
+door: once you have flipped it you can never get back to following the machine,
+which is what most people want most of the time.
+
+The choice is applied before the page paints, so opening a start page twenty
+times a day in dark mode never produces a white flash. While you are on **Match
+system**, an OS that switches at sunset switches Forefront with it, without a
+reload.
+
+Dark is not the light palette inverted. Cards are *lighter* than the page rather
+than white-on-grey with a shadow, filled buttons carry dark text on a light
+accent, and neither end is pure — the page is not black and the brightest text
+is not white, because maximum contrast on a large dark field makes light text
+visibly bleed. Every text colour still clears WCAG AA against every surface it
+can land on, in both themes and all five weekly accents:
+
+```bash
+node tools/check-contrast.js     # 630 pairs, and it fails loudly
+```
+
+This is the one preference Forefront keeps outside the exported JSON, in its own
+browser-storage key. Which theme suits the room you are sitting in is not part
+of your work, and syncing it between a bright office and a dark study would be a
+bug rather than a feature.
 
 ---
 
@@ -341,15 +385,57 @@ actually actionable, what should probably be dropped, help me reorder this for
 next week.
 
 Import is careful about what comes back. It parses, validates, checks the schema
-version, repairs what it can, and **shows you a report before replacing
-anything** — what it read, what it adjusted, what it had to leave out. Broken
-JSON never replaces good data, a file from a newer version of Forefront is
-refused rather than half-read, and your previous dataset is kept as a
-recoverable copy first.
+version, repairs what it can, and **shows you a report before anything changes**
+— what it read, what it adjusted, what it had to leave out. Broken JSON never
+replaces good data, a file from a newer version of Forefront is refused rather
+than half-read, and your previous dataset is kept as a recoverable copy first.
 
 It also preserves fields it does not recognise. If an assistant annotates your
 cards with something Forefront has never heard of, those annotations survive the
 round trip.
+
+**Add or replace.** The report offers both. *Add* appends the cards to the
+bottom of their lanes and leaves everything you already have; *Replace* swaps
+the whole board. Adding is the default, because "here are twenty things I want
+on the board" should not be one keystroke away from wiping it. Nothing you paste
+in gets to push past something you decided mattered — position is priority here,
+and an import has not earned any.
+
+### Starting from a pile of sticky notes
+
+You do not need an export to import. The smallest valid file is a list of
+titles:
+
+```json
+["Call the vendor back", "Book the offsite room", "Draft the Q4 headcount ask"]
+```
+
+Those arrive in Inbox, to be triaged like anything else. Grouping by lane works
+too, and lane names are matched loosely — `"In Progress"`, `"in-progress"` and
+`"doing"` all mean the same thing:
+
+```json
+{ "inbox": ["Call the vendor back"], "Just Do It": ["Book the offsite room"] }
+```
+
+Anything a lane name cannot be pinned to lands in Inbox rather than being
+guessed at.
+
+**Comments are allowed.** Strict JSON has none, which is a problem when the most
+useful thing you can hand someone is an annotated file. Forefront strips `//`
+and `/* … */` on the way in, forgives trailing commas, and writes annotated
+files on the way out:
+
+- **Data → Export → Copy annotated** — your board, with the whole format
+  explained in comments around it. Paste it into a chat with *"add these sticky
+  notes to my board"* and paste the answer back into Import.
+- **Data → Export → Blank template** — the same explanation with no data in it,
+  for generating a board from scratch.
+- [`sample-data/template.jsonc`](sample-data/template.jsonc) is that template,
+  committed here so you can read the format without opening the app.
+
+The annotated file is deliberately not valid JSON. It is valid *input*, which is
+the half that matters.
 
 ### The data format
 
@@ -492,11 +578,14 @@ In Firefox or Safari, export JSON there periodically instead. Only
 ```
 forefront/
 ├── index.html            application entry point, served by the launcher
+├── assets/
+│   └── forefront-mark*   the mark, light and dark, for anything outside the app
 ├── css/
-│   ├── tokens.css        every colour, size and space, in one place
+│   ├── tokens.css        every colour, size and space, light and dark
 │   └── styles.css        components (no literal colours)
 ├── js/
 │   ├── constants.js      every tunable value
+│   ├── theme.js          light / dark / match system
 │   ├── model.js          data shape, validation, migration — no DOM
 │   ├── storage.js        browser storage + connected file
 │   ├── ui.js             DOM helpers, dialogs, menus, banners
@@ -508,7 +597,8 @@ forefront/
 │   └── app.js            shell — state, actions, keyboard
 ├── sample-data/
 │   ├── empty.json        a pristine empty dataset
-│   └── example.json      a populated demo board
+│   ├── example.json      a populated demo board
+│   └── template.jsonc    the format, explained in comments, for assistants
 ├── start-mac.command     double-click launcher for macOS
 └── tools/                local server and development checks
 ```
@@ -524,7 +614,8 @@ The app itself has no dependencies. Node runs the included local server and
 development checks; the macOS launcher can fall back to Python 3 for serving.
 
 ```bash
-node tools/selftest.js       # data model: ordering, ages, review logic, validation
+node tools/selftest.js       # data model: ordering, ages, review logic, validation, import
+node tools/check-contrast.js # every text colour clears AA, in both themes
 node tools/check-samples.js  # sample files are valid and empty.json matches the code
 node tools/browsertest.js    # drives the real index.html in headless Chrome
 node tools/crossbrowsertest.js firefox # localhost smoke test via Firefox WebDriver

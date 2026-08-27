@@ -5,16 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Forefront</title>
   <meta name="description" content="Keep what matters in front of you.">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- The theme, applied before the first paint.
+
+       Every other script in this file is a deferred classic script, and this
+       one deliberately is not. Deferred scripts run after the document is
+       parsed, which is late enough for the browser to have painted a white
+       page — so a dark-mode user opening their start page twenty times a day
+       would get twenty white flashes. There is no way to fix that from inside
+       the boot sequence; it has to happen here.
+
+       js/theme.js is the authority on the theme and duplicates this logic.
+       Keeping these eight lines in step with it is the price of no flash. The
+       key below is C.LS_THEME_KEY in js/constants.js. -->
+  <script>
+    (function () {
+      var pref = 'system';
+      try {
+        var stored = localStorage.getItem('forefront.theme.v1');
+        if (stored === 'light' || stored === 'dark' || stored === 'system') pref = stored;
+      } catch (e) { /* Safari refuses storage to file:// pages; follow the system */ }
+      var dark = pref === 'dark' || (pref === 'system' && window.matchMedia &&
+                 window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var root = document.documentElement;
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      root.setAttribute('data-theme-pref', pref);
+    })();
+  </script>
 
   <!-- No network requests, ever. No fonts, no analytics, no CDN. Forefront
        works identically offline and on a plane. -->
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/styles.css">
 
-  <!-- An inline SVG favicon, so opening index.html from disk does not produce a
-       404 for favicon.ico in the console. -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23334155'/><rect x='9' y='9' width='14' height='2.6' rx='1.3' fill='%23f8fafc'/><rect x='9' y='15' width='14' height='2.6' rx='1.3' fill='%23cbd5e1'/><rect x='9' y='21' width='8' height='2.6' rx='1.3' fill='%2394a3b8'/></svg>">
+  <!-- The Forefront mark, inline, so opening index.html from disk does not
+       produce a 404 for favicon.ico and no request leaves the machine.
+
+       Same three cards as ui.icon('mark') and assets/forefront-mark.svg,
+       reversed out of a filled tile: at 16px on a tab strip a tile holds its
+       shape where a bare mark dissolves into the background. The tile colour
+       is the slate accent from css/tokens.css — the one place a literal hex
+       lives outside that file, because a data: URI cannot read a CSS variable.
+       If the palette changes, change it here too. -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%233f5a7d'/><g transform='translate(16,16) scale(0.74) translate(-16,-16)'><rect x='27' y='10' width='3' height='12' rx='1.25' fill='%23f8fafc' fill-opacity='0.42'/><rect x='20' y='7' width='5' height='18' rx='2' fill='%23f8fafc' fill-opacity='0.66'/><rect x='2' y='4' width='16' height='24' rx='3' fill='%23f8fafc'/></g></svg>">
 </head>
 <body data-view="focus">
 
@@ -42,6 +76,7 @@
        `defer` gives the same ordered, non-blocking execution and works
        everywhere. -->
   <script defer src="js/constants.js"></script>
+  <script defer src="js/theme.js"></script>
   <script defer src="js/model.js"></script>
   <script defer src="js/storage.js"></script>
   <script defer src="js/ui.js"></script>

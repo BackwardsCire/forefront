@@ -62,6 +62,124 @@
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
   // ------------------------------------------------------------------
+  // Icons
+  //
+  // Drawn here rather than loaded, for the same reason there are no web fonts:
+  // an icon font or a sprite file is a network request, and this app has to
+  // behave identically opened from a memory stick on a plane. Every glyph is
+  // on a 16-unit grid and painted with currentColor, so an icon inherits the
+  // colour of whatever it sits in and needs no theme-specific version.
+  // ------------------------------------------------------------------
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function svgNode(tag, attrs, children) {
+    var node = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (attrs[k] === null || attrs[k] === undefined) return;
+      node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (child) { if (child) node.appendChild(child); });
+    return node;
+  }
+
+  var STROKE = { fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5',
+                 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+
+  function stroked(attrs) {
+    var out = {};
+    Object.keys(STROKE).forEach(function (k) { out[k] = STROKE[k]; });
+    Object.keys(attrs).forEach(function (k) { out[k] = attrs[k]; });
+    return out;
+  }
+
+  /** The eight rays of the sun, at 45° intervals, as one path. */
+  function sunRays() {
+    var d = '';
+    for (var i = 0; i < 8; i++) {
+      var a = i * Math.PI / 4;
+      var x = Math.cos(a), y = Math.sin(a);
+      d += 'M' + (8 + x * 5.6).toFixed(2) + ' ' + (8 + y * 5.6).toFixed(2) +
+           'L' + (8 + x * 7.1).toFixed(2) + ' ' + (8 + y * 7.1).toFixed(2) + ' ';
+    }
+    return d.trim();
+  }
+
+  var ICONS = {
+    /** Done. The app's oldest glyph; everything else was drawn to match it. */
+    tick: function () {
+      return [svgNode('path', stroked({ d: 'M3.5 8.5 L6.5 11.5 L12.5 4.5', 'stroke-width': '1.75' }))];
+    },
+
+    /**
+     * The Forefront mark: three cards seen edge-on, the foremost solid and at
+     * full height, the two behind it shorter, narrower and fading out.
+     *
+     * It is the product drawn literally. One thing is in front at full
+     * strength; the rest exist, are clearly still there, and are just as
+     * clearly not what you are being asked to look at. A mark that showed a
+     * neat stack of equals would be describing a different application.
+     *
+     * Depth is carried by fill-opacity rather than by a second colour, so the
+     * whole thing is one currentColor and works anywhere a piece of text does
+     * — light, dark, on an accent fill, in a favicon.
+     *
+     * Drawn back to front so the near card is painted last and any future
+     * overlap resolves the way depth actually does. Widths 8 / 2.5 / 1.5 and
+     * heights 12 / 9 / 6 on a 16 grid, all three centred on y=8, gaps of 1.
+     */
+    mark: function () {
+      return [
+        svgNode('rect', { x: '13.5', y: '5', width: '1.5', height: '6', rx: '0.75',
+                          fill: 'currentColor', 'fill-opacity': '0.3' }),
+        svgNode('rect', { x: '10', y: '3.5', width: '2.5', height: '9', rx: '1',
+                          fill: 'currentColor', 'fill-opacity': '0.55' }),
+        svgNode('rect', { x: '1', y: '2', width: '8', height: '12', rx: '1.5',
+                          fill: 'currentColor' })
+      ];
+    },
+    /** Light. */
+    sun: function () {
+      return [
+        svgNode('circle', stroked({ cx: '8', cy: '8', r: '3.1' })),
+        svgNode('path', stroked({ d: sunRays() }))
+      ];
+    },
+    /** Dark. */
+    moon: function () {
+      return [svgNode('path', stroked({ d: 'M13.6 9.4A5.9 5.9 0 0 1 6.6 2.4 6 6 0 1 0 13.6 9.4Z' }))];
+    },
+    /**
+     * Match system. A disc with one half filled — the convention every OS and
+     * every browser settled on for "auto", and the only one of the three that
+     * has to say "not a choice between these two, but whichever they are using".
+     */
+    auto: function () {
+      return [
+        svgNode('circle', stroked({ cx: '8', cy: '8', r: '5.4' })),
+        svgNode('path', { d: 'M8 2.6 A5.4 5.4 0 0 1 8 13.4 Z', fill: 'currentColor' })
+      ];
+    }
+  };
+
+  /**
+   * icon('moon') → an <svg> that inherits colour and font size.
+   *
+   * aria-hidden because every icon in Forefront sits inside a control that
+   * already has a text label or an aria-label. An icon that announces itself
+   * as well just makes the button say everything twice.
+   */
+  function icon(name, className) {
+    if (!ICONS[name]) throw new Error('ui.icon: no such icon "' + name + '"');
+    return svgNode('svg', {
+      viewBox: '0 0 16 16',
+      class: 'icon' + (className ? ' ' + className : ''),
+      'aria-hidden': 'true',
+      focusable: 'false'
+    }, ICONS[name]());
+  }
+
+  // ------------------------------------------------------------------
   // Dates
   // ------------------------------------------------------------------
 
@@ -326,15 +444,29 @@
         return;
       }
 
+      // `checked` present at all makes the row a radio: it gains a gutter, a
+      // tick when it is the current one, and aria-checked so a screen reader
+      // says "selected" rather than leaving the user to infer it from a shape.
+      var checkable = typeof item.checked === 'boolean';
+
       var button = el('button', {
         type: 'button',
-        role: 'menuitem',
-        class: 'menu__item' + (item.danger ? ' menu__item--danger' : ''),
-        text: item.label,
+        role: checkable ? 'menuitemradio' : 'menuitem',
+        'aria-checked': checkable ? String(item.checked) : null,
+        class: 'menu__item' + (item.danger ? ' menu__item--danger' : '') +
+               (checkable ? ' menu__item--checkable' : ''),
+        text: checkable ? null : item.label,
         tabindex: '-1',
         disabled: item.disabled || false,
         onclick: function () { closeMenu(); item.onSelect(); }
       });
+
+      if (checkable) {
+        button.appendChild(el('span', { class: 'menu__check' },
+          [item.checked ? icon('tick') : null]));
+        button.appendChild(el('span', { text: item.label }));
+      }
+
       buttons.push(button);
       node.appendChild(button);
     });
@@ -381,12 +513,55 @@
 
   function anyMenuOpen() { return !!openMenu; }
 
+  // ------------------------------------------------------------------
+  // The theme control
+  //
+  // One icon button, in the same row as Data and Shortcuts, opening the same
+  // menu the rest of the app uses. It is deliberately not a two-state switch:
+  // once you flip one of those you can never get back to following the
+  // operating system, which is the setting most people actually want. Three
+  // radio rows cost one extra line of code and remove that trap.
+  //
+  // The icon shows the PREFERENCE, not the resolved theme — a half-filled disc
+  // while following the system, rather than a moon that looks like a choice
+  // nobody made.
+  // ------------------------------------------------------------------
+
+  var THEME_ICONS = { system: 'auto', light: 'sun', dark: 'moon' };
+
+  function themeControl(onChange) {
+    var theme = FF.theme;
+    var label = 'Theme: ' + theme.describe();
+
+    var button = el('button', {
+      type: 'button',
+      class: 'btn btn--faint btn--icon',
+      'aria-haspopup': 'menu',
+      'aria-expanded': 'false',
+      'aria-label': label,
+      title: label,
+      onclick: function () {
+        if (button.getAttribute('aria-expanded') === 'true') { closeMenu(); return; }
+        popupMenu(button, theme.PREFS.map(function (pref) {
+          return {
+            label: theme.LABELS[pref],
+            checked: theme.get() === pref,
+            onSelect: function () { theme.set(pref); if (onChange) onChange(); }
+          };
+        }), 'Theme');
+      }
+    }, [icon(THEME_ICONS[theme.get()])]);
+
+    return button;
+  }
+
   function prefersReducedMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   FF.ui = {
     el: el, clear: clear, $: $, $$: $$,
+    svgNode: svgNode, icon: icon, themeControl: themeControl,
     formatToday: formatToday, formatShort: formatShort, formatTime: formatTime,
     openDialog: openDialog, confirmDialog: confirmDialog, anyDialogOpen: anyDialogOpen,
     toast: toast, setBanner: setBanner, announce: announce,

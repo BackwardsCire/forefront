@@ -210,6 +210,25 @@
       el('div', { class: 'data-panel__actions' }, [
         btn('Download JSON', 'primary', function () { downloadJSON(app.getData()); }),
         btn('Copy to clipboard', 'quiet', function () { copyJSON(app.getData()); })
+      ]),
+
+      // The annotated pair. Strict JSON has no comments, so an annotated file
+      // is not valid JSON — which would normally make it useless. It is useful
+      // here because Import strips comments on the way back in, so the file
+      // that explains itself is also the file you can hand back.
+      note('An annotated copy carries the whole format in comments — the lanes, what a card needs, ' +
+           'and what Forefront deliberately has no field for. It is the thing to paste into a chat ' +
+           'along with "add these to my board". Comments are stripped when you import it back.'),
+      el('div', { class: 'data-panel__actions' }, [
+        btn('Copy annotated', 'quiet', function () {
+          copyText(model.annotate(app.getData()), 'Annotated JSON copied to clipboard');
+        }),
+        btn('Download annotated', 'quiet', function () {
+          downloadText(model.annotate(app.getData()), 'forefront-' + model.dateKey(new Date()) + '.jsonc');
+        }),
+        btn('Blank template', 'faint', function () {
+          downloadText(model.annotate(model.createEmptyData()), 'forefront-template.jsonc');
+        })
       ])
     ]);
   }
@@ -231,24 +250,27 @@
     return 'forefront-' + model.dateKey(new Date()) + '.json';
   }
 
-  function downloadJSON(data) {
+  function downloadJSON(data) { downloadText(model.serialize(data), exportFilename()); }
+
+  function downloadText(text, filename) {
     try {
-      var blob = new Blob([model.serialize(data)], { type: 'application/json' });
+      var blob = new Blob([text], { type: 'application/json' });
       var url = URL.createObjectURL(blob);
-      var a = el('a', { href: url, download: exportFilename() });
+      var a = el('a', { href: url, download: filename });
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       // Revoking immediately can cut the download short in some browsers.
       setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
-      ui.toast('Exported ' + exportFilename(), 'ok');
+      ui.toast('Exported ' + filename, 'ok');
     } catch (e) {
       ui.toast('Download failed. Use "Copy to clipboard" instead.', 'error');
     }
   }
 
-  function copyJSON(data) {
-    var json = model.serialize(data);
+  function copyJSON(data) { copyText(model.serialize(data), 'JSON copied to clipboard'); }
+
+  function copyText(json, successMessage) {
 
     function fallback() {
       // execCommand is deprecated but is the only route when the async
@@ -259,7 +281,7 @@
         area.select();
         var ok = document.execCommand('copy');
         document.body.removeChild(area);
-        ui.toast(ok ? 'JSON copied to clipboard' : 'Could not copy — use Download instead.', ok ? 'ok' : 'error');
+        ui.toast(ok ? successMessage : 'Could not copy — use Download instead.', ok ? 'ok' : 'error');
       } catch (e) {
         ui.toast('Could not copy — use Download instead.', 'error');
       }
@@ -267,7 +289,7 @@
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(json)
-        .then(function () { ui.toast('JSON copied to clipboard', 'ok'); })
+        .then(function () { ui.toast(successMessage, 'ok'); })
         .catch(fallback);
     } else {
       fallback();
@@ -287,7 +309,7 @@
     });
 
     var fileInput = el('input', {
-      type: 'file', accept: '.json,application/json', class: 'sr-only',
+      type: 'file', accept: '.json,.jsonc,application/json', class: 'sr-only',
       onchange: function () {
         var file = fileInput.files && fileInput.files[0];
         if (!file) return;
@@ -302,7 +324,10 @@
 
     var rows = [
       el('p', { class: 'data-panel__lede', text:
-        'Imported data is checked before anything is replaced, and the current board is kept as a recoverable copy first.' }),
+        'Imported data is checked before anything changes, and the current board is kept as a recoverable copy first. You choose then whether to add the cards to your board or replace it.' }),
+      note('A whole export, or just a list of titles an assistant wrote — ["Call the vendor back", ' +
+           '"Book the offsite room"] is a valid file, and lands in Inbox. Comments and trailing commas ' +
+           'are forgiven, and lane names like "In Progress" or "just do it" are understood.'),
       el('div', { class: 'data-panel__actions' }, [
         btn('Choose a file…', 'quiet', function () { fileInput.click(); }),
         fileInput
@@ -321,7 +346,7 @@
         btn('Recover the previous dataset', 'faint', function () {
           var backup = FF.storage.readBackup();
           if (!backup) return ui.toast('No recoverable copy found.', 'error');
-          attemptImport(app, backup, close, 'the recovered copy');
+          attemptImport(app, backup, close, 'the recovered copy', { replaceOnly: true });
         })
       ]));
     }
@@ -329,32 +354,41 @@
     return section('Import', rows);
   }
 
-  function attemptImport(app, text, close, label) {
-    var parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch (e) {
-      return showReport({
-        ok: false,
-        errors: ['That is not valid JSON, so nothing was changed. (' + e.message + ')'],
-        warnings: [], rejected: []
-      }, null, label);
+  /**
+   * @param options.replaceOnly  Recovering a backup is a restore, not a merge:
+   *                             offering "add" there would silently double
+   *                             every card the user still has.
+   */
+  function attemptImport(app, text, close, label, options) {
+    options = options || {};
+
+    // readAny, not JSON.parse: it strips comments, straightens a looser shape
+    // and then runs exactly the same validation as any other route in.
+    var result = model.readAny(text);
+
+    if (!result.ok) return showReport(result, label, []);
+
+    var choices = [];
+
+    if (!options.replaceOnly && result.data.cards.length) {
+      choices.push({
+        label: 'Add to my board',
+        kind: 'quiet',
+        onSelect: function () { app.adoptMerged(result.data.cards); close(); }
+      });
     }
 
-    var result = model.validateData(parsed);
+    choices.push({
+      label: 'Replace my data',
+      kind: 'primary',
+      onSelect: function () { app.adoptImported(result.data); close(); }
+    });
 
-    if (!result.ok) {
-      return showReport(result, null, label);
-    }
-
-    showReport(result, function () {
-      app.adoptImported(result.data);
-      close();
-    }, label);
+    showReport(result, label, choices);
   }
 
-  /** Always show what happened before replacing anything. */
-  function showReport(result, onConfirm, label) {
+  /** Always show what happened before anything changes. */
+  function showReport(result, label, choices) {
     ui.openDialog({
       className: 'dialog--report',
       labelledBy: 'report-title',
@@ -365,12 +399,20 @@
             (result.data.weeklyReviews.length === 1 ? ' weekly review' : ' weekly reviews')
           : null;
 
+        var canMerge = choices.some(function (c) { return c.kind === 'quiet'; });
+
         return el('div', { class: 'dialog__body report' }, [
           el('h2', { class: 'dialog__title', id: 'report-title',
                      text: result.ok ? 'Ready to import' : 'Cannot import' }),
           el('p', { class: 'report__lede', text: result.ok
             ? 'Read ' + counts + ' from ' + label + '.'
             : 'Nothing was changed.' }),
+
+          // Said here rather than in a tooltip, because these two buttons sit
+          // next to each other and one of them throws away the current board.
+          result.ok && canMerge ? el('p', { class: 'report__lede', text:
+            'Adding puts them at the bottom of their lanes and leaves everything you already have. ' +
+            'Replacing swaps the whole board for this file.' }) : null,
 
           list('report__errors', 'Problems', result.errors),
           list('report__rejected', 'Left out', result.rejected),
@@ -381,13 +423,16 @@
               type: 'button', class: 'btn btn--quiet',
               text: result.ok ? 'Cancel' : 'Close',
               onclick: function () { closeReport(); }
-            }),
-            result.ok && onConfirm ? el('button', {
-              type: 'button', class: 'btn btn--primary', text: 'Replace my data',
-              'data-autofocus': '',
-              onclick: function () { closeReport(); onConfirm(); }
-            }) : null
-          ])
+            })
+          ].concat(result.ok ? choices.map(function (choice, i) {
+            return el('button', {
+              type: 'button', class: 'btn btn--' + choice.kind, text: choice.label,
+              // Focus the first offered action, which is Add whenever adding
+              // is possible: the safe one should be the one Enter lands on.
+              'data-autofocus': i === 0 ? '' : null,
+              onclick: function () { closeReport(); choice.onSelect(); }
+            });
+          }) : []))
         ]);
       }
     });

@@ -608,12 +608,17 @@
 
       card.notes = typeof rawCard.notes === 'string' ? rawCard.notes : '';
 
-      if (FF.LANE_IDS.indexOf(rawCard.lane) === -1) {
+      var lane = resolveLane(rawCard.lane);
+      if (!lane) {
         warnings.push(where + ' ("' + shorten(title) + '") had an unrecognised lane "' +
           String(rawCard.lane).slice(0, 30) + '"; it was put in Inbox so you can re-file it.');
         card.lane = 'inbox';
       } else {
-        card.lane = rawCard.lane;
+        if (lane !== rawCard.lane) {
+          warnings.push(where + ' ("' + shorten(title) + '") called its lane "' +
+            String(rawCard.lane).slice(0, 30) + '"; that was read as ' + FF.LANE_BY_ID[lane].label + '.');
+        }
+        card.lane = lane;
       }
 
       var order = Number(rawCard.order);
@@ -716,8 +721,404 @@
     return text.length > 40 ? text.slice(0, 37) + '…' : text;
   }
 
+  // ------------------------------------------------------------------
+  // Lane names as people write them
+  //
+  // The lane ids are "justdoit" and "inprogress". Nobody types those, and an
+  // assistant asked to sort a pile of sticky notes will write "Just Do It" or
+  // "in progress" or "doing". Rather than reject a file over punctuation, a
+  // lane name is matched with the spaces, hyphens and capitals removed, plus a
+  // short list of words that unambiguously mean one of the six.
+  //
+  // Deliberately absent: "todo", "backlog", "next", "later". Each could
+  // honestly mean two different lanes, and a card put in the wrong lane is
+  // worse than a card sitting in Inbox waiting to be triaged — which is what
+  // Inbox is for, and where anything unrecognised lands.
+  // ------------------------------------------------------------------
+
+  var EXTRA_LANE_WORDS = [
+    ['in', 'inbox'], ['capture', 'inbox'], ['captured', 'inbox'],
+    ['unsorted', 'inbox'], ['untriaged', 'inbox'], ['new', 'inbox'],
+    ['admin', 'management'], ['people', 'management'], ['leadership', 'management'],
+    ['managing', 'management'],
+    ['project', 'projects'], ['deepwork', 'projects'],
+    ['quick', 'justdoit'], ['quickwins', 'justdoit'], ['chores', 'justdoit'],
+    ['errands', 'justdoit'], ['small', 'justdoit'], ['justdo', 'justdoit'],
+    ['doing', 'inprogress'], ['active', 'inprogress'], ['wip', 'inprogress'],
+    ['committed', 'inprogress'], ['commitments', 'inprogress'], ['focus', 'inprogress'],
+    ['now', 'inprogress'], ['current', 'inprogress'],
+    ['complete', 'done'], ['completed', 'done'], ['finished', 'done'], ['closed', 'done']
+  ];
+
+  function laneKey(value) {
+    return String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  var LANE_ALIASES = (function () {
+    var map = Object.create(null);
+    FF.LANES.forEach(function (lane) {
+      map[laneKey(lane.id)] = lane.id;
+      map[laneKey(lane.label)] = lane.id;
+    });
+    EXTRA_LANE_WORDS.forEach(function (pair) { map[pair[0]] = pair[1]; });
+    return map;
+  })();
+
+  /** 'In Progress' → 'inprogress'. Anything unrecognised → null. */
+  function resolveLane(value) {
+    if (typeof value !== 'string') return null;
+    return LANE_ALIASES[laneKey(value)] || null;
+  }
+
+  // ------------------------------------------------------------------
+  // Reading a file somebody — or something — else wrote
+  //
+  // The export has always been readable enough to hand to an assistant. This
+  // is the other direction: making it easy to get back a file an assistant
+  // WROTE, without loosening what actually reaches the dataset.
+  //
+  // Everything here is a funnel in FRONT of validateData, never a way around
+  // it. Comments are removed, a looser shape is straightened into the real
+  // one, "In Progress" becomes "inprogress" — and then the result goes through
+  // exactly the same validation as a file Forefront wrote itself, and produces
+  // exactly the same report of what was repaired and what was refused.
+  // ------------------------------------------------------------------
+
+  /**
+   * Remove // and /* *\/ comments and trailing commas, without touching the
+   * insides of strings.
+   *
+   * JSON has no comments, which is a problem the moment the format is meant to
+   * be written by hand or explained to an assistant: the most useful thing you
+   * can hand someone is an annotated file, and JSON.parse refuses to read one
+   * back. So Forefront's exports can carry comments and its importer strips
+   * them. A card titled `https://example.com` must survive this, hence the
+   * character-by-character scan rather than a regular expression.
+   */
+  function relaxJSON(text) {
+    var out = [];
+    var i = 0;
+    var inString = false;
+    var escaped = false;
+    var changed = false;
+
+    function lastMeaningful() {
+      for (var k = out.length - 1; k >= 0; k--) {
+        if (!/\s/.test(out[k])) return k;
+      }
+      return -1;
+    }
+
+    while (i < text.length) {
+      var ch = text.charAt(i);
+      var next = text.charAt(i + 1);
+
+      if (inString) {
+        out.push(ch);
+        if (escaped) escaped = false;
+        else if (ch === '\\') escaped = true;
+        else if (ch === '"') inString = false;
+        i++;
+        continue;
+      }
+
+      if (ch === '"') { inString = true; out.push(ch); i++; continue; }
+
+      if (ch === '/' && next === '/') {
+        changed = true;
+        while (i < text.length && text.charAt(i) !== '\n') i++;
+        continue; // the newline itself is left in place, so line numbers hold
+      }
+
+      if (ch === '/' && next === '*') {
+        changed = true;
+        i += 2;
+        while (i < text.length && !(text.charAt(i) === '*' && text.charAt(i + 1) === '/')) {
+          if (text.charAt(i) === '\n') out.push('\n');
+          i++;
+        }
+        i += 2;
+        continue;
+      }
+
+      if (ch === '}' || ch === ']') {
+        var last = lastMeaningful();
+        if (last !== -1 && out[last] === ',') { out.splice(last, 1); changed = true; }
+      }
+
+      out.push(ch);
+      i++;
+    }
+
+    return { text: out.join(''), changed: changed };
+  }
+
+  /**
+   * Parse JSON, and if that fails, parse it again with comments and trailing
+   * commas removed.
+   *
+   * Strict first, on purpose: a file that is already valid JSON is never
+   * rewritten, so this cannot introduce a difference in the ordinary case.
+   */
+  function parseLoose(text) {
+    var tolerated = [];
+    try {
+      return { ok: true, value: JSON.parse(text), tolerated: tolerated };
+    } catch (strictError) {
+      var relaxed = relaxJSON(text);
+      if (relaxed.changed) {
+        try {
+          var value = JSON.parse(relaxed.text);
+          tolerated.push('The file contained comments or trailing commas. They are not part of JSON, ' +
+                         'so they were ignored — everything else was read normally.');
+          return { ok: true, value: value, tolerated: tolerated };
+        } catch (looseError) {
+          return { ok: false, error: describeParseError(looseError), tolerated: tolerated };
+        }
+      }
+      return { ok: false, error: describeParseError(strictError), tolerated: tolerated };
+    }
+  }
+
+  function describeParseError(e) {
+    return 'This is not readable as JSON: ' + String(e && e.message ? e.message : e) +
+           ' Nothing was changed.';
+  }
+
+  /**
+   * Straighten a looser shape into the real one.
+   *
+   * Three shapes an assistant reasonably produces from "here are my sticky
+   * notes", all accepted:
+   *
+   *   ["Call the vendor", "Book the offsite"]
+   *   { "cards": [ { "title": "Call the vendor", "lane": "management" } ] }
+   *   { "inbox": ["Call the vendor"], "Just Do It": ["Book the offsite"] }
+   *
+   * Anything else is left exactly as it is and allowed to fail validation with
+   * a real message, rather than being guessed at.
+   */
+  function coerceShape(value) {
+    var notes = [];
+
+    if (Array.isArray(value)) {
+      notes.push('The file was a bare list, so it was read as a list of cards.');
+      value = { cards: value };
+    }
+
+    if (!isObject(value)) return { value: value, notes: notes };
+
+    if (!Array.isArray(value.cards)) {
+      var laneKeys = Object.keys(value).filter(function (k) {
+        return Array.isArray(value[k]) && resolveLane(k);
+      });
+      if (laneKeys.length) {
+        var collected = [];
+        laneKeys.forEach(function (k) {
+          var lane = resolveLane(k);
+          value[k].forEach(function (entry) { collected.push(asCard(entry, lane)); });
+          delete value[k];
+        });
+        notes.push('Cards were grouped under lane names (' + laneKeys.join(', ') +
+                   '); they were flattened into one list.');
+        value.cards = collected;
+      }
+    }
+
+    if (Array.isArray(value.cards)) {
+      value.cards = value.cards.map(function (entry) { return asCard(entry, null); });
+    }
+
+    return { value: value, notes: notes };
+  }
+
+  function asCard(entry, lane) {
+    if (typeof entry === 'string') entry = { title: entry };
+    if (!isObject(entry)) return entry; // validateData will refuse it, and say why
+
+    var card = copyFields(entry);
+    if (lane && card.lane === undefined) card.lane = lane;
+    // "note" singular is what people and assistants actually write.
+    if (typeof card.notes !== 'string' && typeof card.note === 'string') {
+      card.notes = card.note;
+      delete card.note;
+    }
+    return card;
+  }
+
+  /** Text in, validated dataset out — the whole funnel in one call. */
+  function readAny(text) {
+    var parsed = parseLoose(text);
+    if (!parsed.ok) {
+      return { ok: false, errors: [parsed.error], warnings: [], rejected: [], data: null };
+    }
+    var shaped = coerceShape(parsed.value);
+    var result = validateData(shaped.value);
+    result.warnings = parsed.tolerated.concat(shaped.notes, result.warnings);
+    return result;
+  }
+
+  /**
+   * Add cards to the board instead of replacing it.
+   *
+   * The reason this exists: "I had a list of sticky notes and got an assistant
+   * to turn them into a file" is an ADD, and offering only Replace would mean
+   * the obvious action wipes a board of real commitments.
+   *
+   * Everything lands at the BOTTOM of its lane. Position is priority in
+   * Forefront, and an import has not earned any: nothing you paste in gets to
+   * push past something you decided mattered.
+   */
+  function mergeCards(data, incoming) {
+    var usedIds = Object.create(null);
+    data.cards.forEach(function (c) { usedIds[c.id] = true; });
+
+    var titlesInLane = Object.create(null);
+    data.cards.forEach(function (c) {
+      if (isActive(c)) titlesInLane[c.lane + ' ' + c.title.trim().toLowerCase()] = true;
+    });
+
+    var duplicates = [];
+
+    incoming.forEach(function (source) {
+      var card = copyFields(source);
+      if (usedIds[card.id]) card.id = uid();
+      usedIds[card.id] = true;
+
+      var key = card.lane + ' ' + card.title.trim().toLowerCase();
+      if (titlesInLane[key]) duplicates.push(card.title);
+      titlesInLane[key] = true;
+
+      card.order = nextOrder(data, card.lane);
+      data.cards.push(card);
+    });
+
+    normalizeAll(data);
+    touch(data);
+    return { added: incoming.length, duplicates: duplicates };
+  }
+
+  function nextOrder(data, laneId) {
+    var max = -1;
+    data.cards.forEach(function (c) {
+      if (c.lane === laneId && isFinite(c.order) && c.order > max) max = c.order;
+    });
+    return max + 1;
+  }
+
+  // ------------------------------------------------------------------
+  // Writing a file for somebody — or something — else to read
+  // ------------------------------------------------------------------
+
+  /**
+   * What the format is, in prose, for pasting to an assistant along with the
+   * request. Kept here rather than in the Data panel so that the annotated
+   * export, the "copy a briefing" button and sample-data/template.jsonc are
+   * all the same words, and cannot drift into describing different formats.
+   */
+  var FORMAT_GUIDE = [
+    'Forefront data file.',
+    '',
+    'Forefront is an attention-management board. Everything it knows is in this',
+    'one file. It can be edited by hand or generated wholesale — the importer',
+    'checks everything, repairs what it can, and reports the rest, so an',
+    'imperfect file is safe to try.',
+    '',
+    'Comments like this one are allowed. Strict JSON has none, so Forefront',
+    'strips them on the way in. Trailing commas are forgiven too.',
+    '',
+    'THE LANES, left to right on the board:',
+    '',
+    '  inbox        Just captured. Not yet decided. Empty this by dragging.',
+    '  management   Running a team: reviews, staffing, vendors, the org.',
+    '  projects     Substantial work with a shape to it.',
+    '  justdoit     Under about five minutes. Kept narrow on purpose so a pile',
+    '               of small chores cannot outrank one hard thing.',
+    '  inprogress   Committed to. The top three of these ARE the home screen.',
+    '  done         Finished. Leaves the board after a few days, is never',
+    '               deleted.',
+    '',
+    'Lane names are matched loosely: "In Progress", "in-progress" and "doing"',
+    'all mean inprogress. Anything unrecognised lands in inbox rather than',
+    'being guessed at.',
+    '',
+    'THERE IS NO priority field, due date, tag, estimate, subtask or',
+    'recurrence, and adding one to this file will not create one. Priority is',
+    'position: within a lane, "order" ascending is most-important first.',
+    '',
+    'A CARD needs nothing but a title. Everything else is filled in for you:',
+    '',
+    '  title        required. Plain text.',
+    '  lane         one of the six above. Defaults to inbox.',
+    '  notes        optional. A sentence or two of detail, not a document.',
+    '  order        position within the lane, ascending. Defaults to the order',
+    '               the cards appear in this file.',
+    '  id           a unique string. Generated if missing.',
+    '  createdAt    ISO 8601. Defaults to now, which restarts the card\'s age.',
+    '  completedAt  ISO 8601, and only for cards in done.',
+    '  discardedAt  ISO 8601. Set means "dropped without doing it" — a soft',
+    '               state, kept forever, distinct from completed.',
+    '',
+    'THE SMALLEST USEFUL FILE is a bare list of titles:',
+    '',
+    '  ["Call the vendor back", "Book the offsite room"]',
+    '',
+    'They arrive in Inbox to be triaged. Grouping by lane also works:',
+    '',
+    '  { "inbox": ["Call the vendor back"], "Just Do It": ["Book the room"] }',
+    '',
+    'Unrecognised fields are preserved untouched, so notes an assistant leaves',
+    'for itself survive a round trip.'
+  ].join('\n');
+
   /** Pretty JSON — this file is meant to be read by people and by assistants. */
   function serialize(data) { return JSON.stringify(data, null, 2); }
+
+  /**
+   * The same data, with the format explained around it.
+   *
+   * Not valid JSON, and that is the point: it is the file you hand to an
+   * assistant with "here is my board, add these sticky notes to it", and
+   * Forefront reads it straight back in. Cards are written one per line
+   * because a hundred cards at nine lines each is not something anyone, human
+   * or otherwise, reads carefully.
+   */
+  function annotate(data) {
+    var lines = [];
+
+    FORMAT_GUIDE.split('\n').forEach(function (line) {
+      lines.push(line ? '// ' + line : '//');
+    });
+
+    lines.push('');
+    lines.push('{');
+    lines.push('  "schemaVersion": ' + JSON.stringify(data.schemaVersion) + ',');
+    lines.push('  "app": ' + JSON.stringify(data.app || C.APP_NAME) + ',');
+    lines.push('  "meta": ' + JSON.stringify(data.meta) + ',');
+    lines.push('');
+    lines.push('  // One flat list. The lane field says where a card sits; the order');
+    lines.push('  // field says how far up. Cards in "done" are history, not work.');
+    pushList(lines, 'cards', data.cards, ',');
+    lines.push('');
+    lines.push('  // One entry per Monday you were offered the weekly review, whether or');
+    lines.push('  // not you did it. Safe to leave empty in a file you are generating.');
+    pushList(lines, 'weeklyReviews', data.weeklyReviews, '');
+    lines.push('}');
+
+    return lines.join('\n') + '\n';
+  }
+
+  function pushList(lines, name, items, trailing) {
+    if (!items.length) {
+      lines.push('  "' + name + '": []' + trailing);
+      return;
+    }
+    lines.push('  "' + name + '": [');
+    items.forEach(function (item, i) {
+      lines.push('    ' + JSON.stringify(item) + (i === items.length - 1 ? '' : ','));
+    });
+    lines.push('  ]' + trailing);
+  }
 
   // ------------------------------------------------------------------
 
@@ -765,6 +1166,15 @@
 
     migrateData: migrateData,
     validateData: validateData,
-    serialize: serialize
+    resolveLane: resolveLane,
+    relaxJSON: relaxJSON,
+    parseLoose: parseLoose,
+    coerceShape: coerceShape,
+    readAny: readAny,
+    mergeCards: mergeCards,
+
+    FORMAT_GUIDE: FORMAT_GUIDE,
+    serialize: serialize,
+    annotate: annotate
   };
 })(window.FF);

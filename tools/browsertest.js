@@ -45,6 +45,7 @@ function runPage(seedJSON, testBody, opts = {}) {
     try {
       localStorage.clear();
       ${seedJSON ? `localStorage.setItem('forefront.data.v1', ${JSON.stringify(seedJSON)});` : ''}
+      ${opts.theme ? `localStorage.setItem('forefront.theme.v1', ${JSON.stringify(opts.theme)});` : ''}
     } catch (e) {}
     ${opts.now ? `
     // Freeze "now" so review-day behaviour can be tested on a real Monday.
@@ -1000,6 +1001,120 @@ report('Enter belongs to whatever is focused', runPage(example, `
   await wait(60);
   ok('Enter on a commitment Done button is not cancelled by the commitment', commitmentLive);
   ok('and does not open the edit dialog', !document.querySelector('.edit__title'));
+`));
+
+report('Theme', runPage(example, `
+  const root = document.documentElement;
+
+  // The attribute always holds the RESOLVED theme. If "system" ever reaches
+  // it, tokens.css has no block for it and the app renders unstyled-ish.
+  ok('data-theme is resolved, never "system"', ['light','dark'].includes(root.dataset.theme));
+  eq('an untouched install follows the system', root.dataset.themePref, 'system');
+  eq('and resolves to what the system asked for', root.dataset.theme,
+     matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+  // T cycles system → light → dark → system.
+  key(document.body, 't');
+  await wait(30);
+  eq('T steps to light', root.dataset.themePref, 'light');
+  eq('and resolves to light', root.dataset.theme, 'light');
+  key(document.body, 't');
+  await wait(30);
+  eq('T steps to dark', root.dataset.themePref, 'dark');
+  eq('and resolves to dark', root.dataset.theme, 'dark');
+  eq('the choice is stored', localStorage.getItem('forefront.theme.v1'), 'dark');
+  key(document.body, 't');
+  await wait(30);
+  eq('T comes back round to system', root.dataset.themePref, 'system');
+
+  // Dark must actually repaint, not merely set an attribute.
+  key(document.body, 't'); key(document.body, 't');
+  await wait(30);
+  const page = getComputedStyle(document.body).backgroundColor;
+  const rgb = page.match(/\\d+/g).map(Number);
+  ok('dark actually darkens the page', rgb[0] + rgb[1] + rgb[2] < 200, page);
+  eq('and tells the browser, so scrollbars and form controls follow',
+     getComputedStyle(root).colorScheme, 'dark');
+
+  ok('typing is not hijacked by the shortcut', (function () {
+    const before = root.dataset.themePref;
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.focus();
+    key(input, 't');
+    const after = root.dataset.themePref;
+    input.remove();
+    return before === after;
+  })());
+
+  // The control itself, in Focus View.
+  key(document.body, 'f');
+  await until(() => document.querySelector('.focus'), 'Focus View');
+  const toggle = document.querySelector('.focus__actions .btn--icon');
+  ok('Focus View has a theme control', !!toggle);
+  ok('it is labelled with the current state', /^Theme: /.test(toggle.getAttribute('aria-label')));
+  ok('and names the resolved theme while following the system',
+     !/system/i.test(toggle.getAttribute('aria-label')) ||
+     /\\((light|dark)\\)/.test(toggle.getAttribute('aria-label')));
+
+  click(toggle);
+  const menu = await until(() => document.querySelector('.menu'), 'the theme menu');
+  const items = all('.menu__item', menu);
+  eq('offers three states, not a two-way switch', items.length, 3);
+  ok('they are radios', items.every(i => i.getAttribute('role') === 'menuitemradio'));
+  eq('exactly one is marked current', items.filter(i => i.getAttribute('aria-checked') === 'true').length, 1);
+  ok('"Match system" is one of them', items.some(i => /Match system/.test(i.textContent)));
+
+  click(items.find(i => i.textContent.trim() === 'Light'));
+  await wait(40);
+  eq('choosing Light applies it', root.dataset.theme, 'light');
+  eq('and records it as a choice, not as system', root.dataset.themePref, 'light');
+
+  // The board has its own copy of the control.
+  key(document.body, 'b');
+  await until(() => document.querySelector('.board'), 'the board');
+  ok('the board header has one too', !!document.querySelector('.board__actions .btn--icon'));
+`));
+
+report('A stored dark preference survives the reload', runPage(example, `
+  eq('applied at boot', document.documentElement.dataset.theme, 'dark');
+  eq('and remembered as a choice', document.documentElement.dataset.themePref, 'dark');
+  ok('the page is painted dark', (function () {
+    const rgb = getComputedStyle(document.body).backgroundColor.match(/\\d+/g).map(Number);
+    return rgb[0] + rgb[1] + rgb[2] < 200;
+  })());
+  ok('text still reads against it', (function () {
+    const rgb = getComputedStyle(document.querySelector('.commitment__title')).color.match(/\\d+/g).map(Number);
+    return rgb[0] + rgb[1] + rgb[2] > 500;
+  })());
+`, { theme: 'dark' }));
+
+report('Import accepts what an assistant would write', runPage(example, `
+  key(document.body, 'd');
+  await until(() => document.querySelector('.data-panel'), 'the Data panel');
+
+  const paste = document.querySelector('.data-panel__paste');
+  paste.value = '// stickies from this morning\\n{ "Just Do It": ["Book the offsite room",], }';
+  click(all('.data-panel .btn').find(b => /Import pasted/.test(b.textContent)));
+
+  const report = await until(() => document.querySelector('.report'), 'the import report');
+  ok('a commented, trailing-comma file is accepted', /Ready to import/.test(text('.dialog__title', report)));
+  ok('and says the comments were tolerated', /comments or trailing commas/.test(report.textContent));
+
+  const buttons = all('.dialog__actions .btn', report).map(b => b.textContent.trim());
+  ok('adding is offered', buttons.includes('Add to my board'));
+  ok('replacing is offered', buttons.includes('Replace my data'));
+  ok('the safe choice is the default', document.activeElement.textContent.trim() === 'Add to my board');
+
+  const before = data().cards.length;
+  click(all('.dialog__actions .btn', report).find(b => /Add to my board/.test(b.textContent)));
+  await wait(80);
+  eq('one card was added, not a whole board replaced', data().cards.length, before + 1);
+  const added = data().cards.find(c => c.title === 'Book the offsite room');
+  ok('the card arrived', !!added);
+  eq('"Just Do It" was understood as a lane', added.lane, 'justdoit');
+  ok('it went to the bottom of that lane, not the top',
+     added.order === Math.max(...data().cards.filter(c => c.lane === 'justdoit').map(c => c.order)));
 `));
 
 console.log(fail === 0 ? `\n  ✓ ${pass} browser checks passed\n` : `\n  ${pass} passed, ${fail} FAILED\n`);
