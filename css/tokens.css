@@ -1,0 +1,160 @@
+/**
+ * Forefront — design tokens.
+ *
+ * Every colour, size and spacing value in the application is named here. No
+ * component stylesheet contains a literal colour. Dropping in a completely
+ * different professional palette should mean editing this file and nothing
+ * else.
+ *
+ * Light only. There is no dark mode, by design.
+ *
+ * Contrast: every text token clears WCAG AA (4.5:1) against EVERY surface it
+ * can land on — white, the page, the subtle surface, and all five weekly
+ * washes — not merely against white. Worst case of that set:
+ *
+ *   --text-primary    #172033   14.6:1
+ *   --text-secondary  #475569    6.8:1
+ *   --text-muted      #55637a    5.5:1
+ *   --text-faint      #5f6d80    4.7:1
+ *
+ * There is deliberately no sub-AA tier. An earlier draft had one, annotated
+ * "decoration only, never information", and then used it for dates, counts,
+ * hints and a button label — which is how that kind of token always ends up
+ * being used. Quietness here comes from size and weight instead.
+ */
+
+:root {
+  /* ---- Surfaces ---------------------------------------------------- */
+  --bg-page:           #f6f7f9;
+  --bg-surface:        #ffffff;
+  --bg-surface-subtle: #f1f3f6;
+  --bg-overlay:        rgba(23, 32, 51, 0.28);
+
+  /* ---- Text -------------------------------------------------------- */
+  --text-primary:   #172033;
+  --text-secondary: #475569;
+  --text-muted:     #55637a;
+  --text-faint:     #5f6d80;
+  --text-inverse:   #ffffff;
+
+  /* ---- Accents ----------------------------------------------------- *
+   * Overridden per week by the [data-accent] blocks at the foot of this
+   * file. Only these four move; everything above stays fixed so that
+   * contrast and hierarchy never change with the week.                  */
+  --accent-primary:   #3f5a7d;
+  --accent-strong:    #2f4560;
+  --accent-secondary: #6d3b46;
+  --focus-wash:       #f3f5f9;
+
+  /* ---- Lines and depth --------------------------------------------- */
+  --border-subtle:  #e3e8ee;
+  --border-muted:   #d3dae3;
+  --border-strong:  #b8c2ce;
+  --shadow-card:    0 1px 2px rgba(23, 32, 51, 0.05);
+  --shadow-raised:  0 2px 5px rgba(23, 32, 51, 0.07);
+  --shadow-drag:    0 10px 26px rgba(23, 32, 51, 0.16);
+  --shadow-dialog:  0 18px 48px rgba(23, 32, 51, 0.20);
+
+  /* ---- Meaning ----------------------------------------------------- */
+  --danger:      #9b2c3a;
+  --danger-wash: #fdf4f5;
+  --ok:          #2f6b52;
+  --warn:        #8a6118;
+  --warn-wash:   #fdf8ef;
+
+  /* ---- Type -------------------------------------------------------- *
+   * A system stack. Segoe UI on Windows 11, SF on macOS. No web fonts,
+   * so nothing to download and nothing to fail offline.                 */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
+             "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --size-xs:  0.6875rem;   /* 11px — ages, counts             */
+  --size-sm:  0.8125rem;   /* 13px — secondary labels         */
+  --size-md:  0.9375rem;   /* 15px — card titles, body        */
+  --size-lg:  1.0625rem;   /* 17px — lane headings            */
+  --size-input: 1.25rem;   /* 20px — Quick Capture, still note-sized  */
+  --size-xl:  1.5rem;      /* 24px — commitments              */
+  --size-2xl: 1.875rem;    /* 30px — commitments, roomy       */
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semi:   600;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --tracking-wide: 0.08em;
+  --tracking-wider: 0.14em;
+
+  /* ---- Space ------------------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+
+  /* ---- Board geometry ---------------------------------------------- */
+  --lane-base-width: 17.5rem;
+  --lane-gap: var(--space-4);
+  --board-max: 96rem;
+  --focus-max: 44rem;
+
+  /* ---- Motion ------------------------------------------------------ */
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --dur-fast: 90ms;
+  --dur-normal: 160ms;
+  --dur-view: 220ms;
+}
+
+/**
+ * Weekly accent families.
+ *
+ * One is chosen from the calendar week number, so Forefront looks very slightly
+ * different on Monday than it did the Monday before, and identical all week on
+ * every machine. Nothing moves and no text changes contrast — only the accent
+ * hue and the wash behind Focus. It is enough to stop the page becoming
+ * wallpaper and not enough to notice as a "theme".
+ *
+ * Turn it off with WEEKLY_ACCENT_ROTATION in js/constants.js.
+ */
+
+[data-accent="slate"] {
+  --accent-primary:   #3f5a7d;
+  --accent-strong:    #2f4560;
+  --accent-secondary: #6d3b46;
+  --focus-wash:       #f3f5f9;
+}
+
+[data-accent="steel"] {
+  --accent-primary:   #36617a;
+  --accent-strong:    #294b5e;
+  --accent-secondary: #6d3b46;
+  --focus-wash:       #f1f6f8;
+}
+
+[data-accent="navy"] {
+  --accent-primary:   #33456f;
+  --accent-strong:    #263455;
+  --accent-secondary: #6b3350;
+  --focus-wash:       #f3f4fa;
+}
+
+[data-accent="maroon"] {
+  --accent-primary:   #4a5a72;
+  --accent-strong:    #384558;
+  --accent-secondary: #7a3a44;
+  --focus-wash:       #faf5f5;
+}
+
+[data-accent="burgundy"] {
+  --accent-primary:   #4f5763;
+  --accent-strong:    #3b424c;
+  --accent-secondary: #6b3350;
+  --focus-wash:       #faf4f7;
+}

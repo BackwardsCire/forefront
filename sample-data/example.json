@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 1,
+  "app": "Forefront",
+  "meta": {
+    "createdAt": "2026-07-17T14:00:00.000Z",
+    "updatedAt": "2026-08-26T04:04:06.651Z"
+  },
+  "cards": [
+    {
+      "id": "013a129d-1f8d-4d5f-af1f-97581e0fe616",
+      "title": "Write the team mission statement",
+      "notes": "",
+      "lane": "projects",
+      "order": 2,
+      "createdAt": "2026-07-31T13:15:00.000Z",
+      "updatedAt": "2026-07-31T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "2eac1ecc-7f97-479e-917e-677ab2cdde8e",
+      "title": "Finish security strategy draft",
+      "notes": "Sections 1-3 drafted. Still need the identity roadmap and the funding ask.",
+      "lane": "inprogress",
+      "order": 2,
+      "createdAt": "2026-08-04T13:15:00.000Z",
+      "updatedAt": "2026-08-04T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "46d6edfc-072a-4936-8ec5-e2bc8342e9e3",
+      "title": "Review vendor strategy",
+      "notes": "Renewal window opens in Q1. Worth deciding whether we keep both vendors.",
+      "lane": "management",
+      "order": 4,
+      "createdAt": "2026-08-07T13:15:00.000Z",
+      "updatedAt": "2026-08-07T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "1a080921-c384-4631-a992-294d1190cb69",
+      "title": "Clean up Jira hygiene across the team",
+      "notes": "",
+      "lane": "management",
+      "order": 3,
+      "createdAt": "2026-08-12T13:15:00.000Z",
+      "updatedAt": "2026-08-12T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "f178edeb-e713-4aca-9491-03dd5dfb2697",
+      "title": "Review architecture proposal",
+      "notes": "",
+      "lane": "inprogress",
+      "order": 1,
+      "createdAt": "2026-08-14T13:15:00.000Z",
+      "updatedAt": "2026-08-14T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "a218a0ad-ab24-40b4-92d6-8fa9ce05d85e",
+      "title": "Write the FY27 roadmap",
+      "notes": "",
+      "lane": "projects",
+      "order": 1,
+      "createdAt": "2026-08-15T13:15:00.000Z",
+      "updatedAt": "2026-08-15T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "3f914e2b-868b-4b15-a12a-974b90e3eef6",
+      "title": "Complete team financial analysis",
+      "notes": "",
+      "lane": "inprogress",
+      "order": 0,
+      "createdAt": "2026-08-17T13:15:00.000Z",
+      "updatedAt": "2026-08-17T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "03e2caad-d8f5-48a9-8bc4-016263501841",
+      "title": "Review the open issue log",
+      "notes": "",
+      "lane": "management",
+      "order": 2,
+      "createdAt": "2026-08-18T13:15:00.000Z",
+      "updatedAt": "2026-08-18T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "66de261d-5855-49e2-b711-702c38289aca",
+      "title": "Ask Facilities about the move date",
+      "notes": "",
+      "lane": "justdoit",
+      "order": 5,
+      "createdAt": "2026-08-19T13:15:00.000Z",
+      "updatedAt": "2026-08-19T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "41f3b5b5-3945-431c-bd44-67b88d43b371",
+      "title": "Review staffing proposal",
+      "notes": "",
+      "lane": "management",
+      "order": 1,
+      "createdAt": "2026-08-20T13:15:00.000Z",
+      "updatedAt": "2026-08-20T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "d8e2e7fd-3101-4f49-9a85-e2e5be75f88a",
+      "title": "Build the platform operating model",
+      "notes": "",
+      "lane": "projects",
+      "order": 0,
+      "createdAt": "2026-08-21T13:15:00.000Z",
+      "updatedAt": "2026-08-21T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "cf545163-4f01-4240-93e4-9f77db13c91a",
+      "title": "Send Priya the onboarding doc",
+      "notes": "",
+      "lane": "justdoit",
+      "order": 4,
+      "createdAt": "2026-08-21T13:15:00.000Z",
+      "updatedAt": "2026-08-21T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "70e80129-9b56-4d7e-8675-bfecfe534c2a",
+      "title": "Prepare for the leadership review",
+      "notes": "",
+      "lane": "management",
+      "order": 0,
+      "createdAt": "2026-08-22T13:15:00.000Z",
+      "updatedAt": "2026-08-22T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "84f08e42-c0af-4b4d-ab55-b0c5104994e8",
+      "title": "Something Dana raised about the offsite agenda",
+      "notes": "",
+      "lane": "inbox",
+      "order": 2,
+      "createdAt": "2026-08-23T13:15:00.000Z",
+      "updatedAt": "2026-08-23T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "19c22389-89db-4ac0-913f-b7b6c1f4b074",
+      "title": "Approve the expense report",
+      "notes": "",
+      "lane": "justdoit",
+      "order": 3,
+      "createdAt": "2026-08-23T13:15:00.000Z",
+      "updatedAt": "2026-08-23T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "e9720316-dc50-4f79-a1d0-585d706f738a",
+      "title": "Email Amy the revised headcount numbers",
+      "notes": "",
+      "lane": "justdoit",
+      "order": 2,
+      "createdAt": "2026-08-24T13:15:00.000Z",
+      "updatedAt": "2026-08-24T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "9336321c-592f-4276-973d-f40e2a9f4de3",
+      "title": "Ask Mike whether contractor extensions are in Q4 funding",
+      "notes": "",
+      "lane": "inbox",
+      "order": 1,
+      "createdAt": "2026-08-25T13:15:00.000Z",
+      "updatedAt": "2026-08-25T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "f6005542-c6bb-45b1-9653-2679b2dfc24a",
+      "title": "Send Peter the link to the deck",
+      "notes": "",
+      "lane": "justdoit",
+      "order": 1,
+      "createdAt": "2026-08-25T13:15:00.000Z",
+      "updatedAt": "2026-08-25T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "1943dc3e-5084-488a-bb28-58a83a080374",
+      "title": "Follow up on the vendor SOC 2 report",
+      "notes": "",
+      "lane": "inbox",
+      "order": 0,
+      "createdAt": "2026-08-26T13:15:00.000Z",
+      "updatedAt": "2026-08-26T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "0f1a043f-9e41-4098-a30d-f378673d0d98",
+      "title": "Reply to Dana about the offsite date",
+      "notes": "",
+      "lane": "justdoit",
+      "order": 0,
+      "createdAt": "2026-08-26T13:15:00.000Z",
+      "updatedAt": "2026-08-26T13:15:00.000Z",
+      "completedAt": null,
+      "discardedAt": null,
+      "sourceLane": null
+    },
+    {
+      "id": "547d90cc-15f2-473a-91f1-186ed3fd52bc",
+      "title": "Draft the quarterly board summary",
+      "notes": "",
+      "lane": "done",
+      "order": 0,
+      "createdAt": "2026-08-12T13:15:00.000Z",
+      "updatedAt": "2026-08-25T20:30:00.000Z",
+      "completedAt": "2026-08-25T20:30:00.000Z",
+      "discardedAt": null,
+      "sourceLane": "projects"
+    },
+    {
+      "id": "8b6e4e1b-cd13-42ca-aa26-999768776865",
+      "title": "Give Sam feedback on the design doc",
+      "notes": "",
+      "lane": "done",
+      "order": 1,
+      "createdAt": "2026-08-18T13:15:00.000Z",
+      "updatedAt": "2026-08-24T20:30:00.000Z",
+      "completedAt": "2026-08-24T20:30:00.000Z",
+      "discardedAt": null,
+      "sourceLane": "management"
+    },
+    {
+      "id": "67bd486c-ef89-45da-ab42-d86bca410676",
+      "title": "Approve the contractor renewal",
+      "notes": "",
+      "lane": "done",
+      "order": 2,
+      "createdAt": "2026-08-20T13:15:00.000Z",
+      "updatedAt": "2026-08-23T20:30:00.000Z",
+      "completedAt": "2026-08-23T20:30:00.000Z",
+      "discardedAt": null,
+      "sourceLane": "justdoit"
+    },
+    {
+      "id": "47038dc1-f556-4461-a000-4d40d5987ea1",
+      "title": "Publish the on-call rotation",
+      "notes": "",
+      "lane": "done",
+      "order": 0,
+      "createdAt": "2026-08-14T13:15:00.000Z",
+      "updatedAt": "2026-08-17T20:30:00.000Z",
+      "completedAt": "2026-08-17T20:30:00.000Z",
+      "discardedAt": null,
+      "sourceLane": "management"
+    },
+    {
+      "id": "96e29585-eb06-4bc3-9f29-49f2ab58a781",
+      "title": "Look into the conference CFP",
+      "notes": "",
+      "lane": "projects",
+      "order": 0,
+      "createdAt": "2026-07-26T13:15:00.000Z",
+      "updatedAt": "2026-08-26T04:04:06.651Z",
+      "completedAt": null,
+      "discardedAt": "2026-08-22T21:00:00.000Z",
+      "sourceLane": "projects"
+    }
+  ],
+  "weeklyReviews": [
+    {
+      "weekOf": "2026-08-10",
+      "status": "skipped",
+      "completedAt": "2026-08-10T12:05:00.000Z",
+      "commitmentIds": [],
+      "deferrals": [],
+      "note": ""
+    },
+    {
+      "weekOf": "2026-08-17",
+      "status": "completed",
+      "completedAt": "2026-08-17T13:12:00.000Z",
+      "commitmentIds": [
+        "3f914e2b-868b-4b15-a12a-974b90e3eef6",
+        "f178edeb-e713-4aca-9491-03dd5dfb2697",
+        "2eac1ecc-7f97-479e-917e-677ab2cdde8e"
+      ],
+      "deferrals": [
+        "2026-08-17T12:02:00.000Z"
+      ],
+      "note": ""
+    }
+  ]
+}

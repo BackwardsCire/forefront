@@ -1,0 +1,49 @@
+# ---------------------------------------------------------------
+# Your real Forefront data must never be committed.
+#
+# It will contain colleagues' names, company information, project
+# detail and management context. The safest arrangement is to keep
+# the file outside this repository entirely — somewhere like
+# OneDrive/Forefront/forefront-data.json — and point Forefront at it
+# with "Create a new data file…" in the Data panel.
+#
+# These patterns are a second line of defence for the case where it
+# ends up here anyway. Everything under sample-data/ is invented and
+# is committed on purpose.
+# ---------------------------------------------------------------
+forefront-data.json
+forefront-*.json
+*.forefront.json
+data/
+my-data/
+private/
+!sample-data/
+!sample-data/*.json
+
+# Scratch files from the dev tools
+_browsertest.*.tmp.html
+_shot.tmp.html
+_boottime.tmp.html
+_probe.tmp.html
+screenshots/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# Local env / secrets
+.env
+.env.local
+
+# Build output (if tooling is ever added — none is needed today)
+dist/
+build/
+node_modules/

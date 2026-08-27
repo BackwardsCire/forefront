@@ -1,0 +1,1192 @@
+/**
+ * Forefront — components.
+ *
+ * Every colour here comes from a token in tokens.css. If you find a literal hex
+ * value below, it is a bug.
+ *
+ * The organising idea: hierarchy is made from type size, weight, spacing and
+ * muted colour — not from borders, fills or badges. Management and Projects are
+ * not given competing brand colours, because two loud lanes are the same as no
+ * hierarchy at all.
+ */
+
+/* ==================================================================
+   Reset and base
+   ================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--size-md);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, dl, dd, ol, ul, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+
+button, input, textarea, select { font: inherit; color: inherit; }
+
+kbd {
+  font-family: var(--font-ui);
+  font-size: 0.9em;
+  font-weight: var(--weight-medium);
+  padding: 0.1em 0.42em;
+  border: 1px solid var(--border-muted);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* One focus treatment everywhere, always visible when reached by keyboard. */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+.noscript {
+  max-width: 32rem;
+  margin: var(--space-8) auto;
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* ==================================================================
+   Buttons and links
+   ================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.4rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease);
+}
+.btn:hover { background: var(--bg-surface-subtle); color: var(--text-primary); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn:disabled:hover { background: transparent; color: var(--text-secondary); }
+
+.btn--primary {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--text-inverse);
+}
+.btn--primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--text-inverse); }
+
+.btn--quiet { border-color: var(--border-muted); background: var(--bg-surface); }
+.btn--quiet:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+
+.btn--ghost {
+  border-color: var(--border-muted);
+  color: var(--text-secondary);
+  padding: 0.5rem 1.15rem;
+}
+.btn--ghost:hover { border-color: var(--accent-primary); color: var(--accent-primary); background: transparent; }
+
+.btn--faint { color: var(--text-muted); font-weight: var(--weight-normal); }
+.btn--faint:hover { color: var(--text-secondary); }
+
+.btn--danger { background: var(--danger); border-color: var(--danger); color: var(--text-inverse); }
+.btn--danger:hover { background: var(--danger); filter: brightness(0.92); color: var(--text-inverse); }
+
+.btn--small { padding: 0.25rem 0.6rem; font-size: var(--size-xs); }
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-primary);
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--border-strong);
+}
+.link:hover { text-decoration-color: currentColor; }
+.link--small { font-size: var(--size-xs); }
+.link--danger { color: var(--danger); }
+
+/* ==================================================================
+   Wordmark
+   ================================================================== */
+
+.wordmark {
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semi);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.wordmark--button {
+  padding: 0; border: 0; background: none; cursor: pointer;
+}
+.wordmark--button:hover { color: var(--accent-primary); }
+
+/* ==================================================================
+   Focus View
+   ==================================================================
+   The default page. Deliberately mostly empty. The commitments are the
+   only thing set at a size you read from across the desk; everything
+   else is small, muted and out of the way.                            */
+
+/* The weekly wash sits on the page itself, full width. Painting it on the
+   centred column instead leaves a visible rectangle with hard edges. */
+body[data-view="focus"] {
+  /* The colour is named explicitly: the `background` shorthand resets
+     background-color to transparent, which leaves a visible seam where the
+     gradient stops and the untinted canvas begins. */
+  background: linear-gradient(var(--focus-wash), var(--bg-page) 32rem) no-repeat var(--bg-page);
+  background-attachment: fixed;
+}
+
+.focus {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: var(--focus-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+}
+
+.focus__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.focus__date {
+  font-size: var(--size-sm);
+  color: var(--text-muted);
+}
+
+/* Deliberately not vertically centred. Centring three short lines in a 1080px
+   viewport leaves them adrift in the middle of nowhere; sitting them where the
+   eye already lands reads as composed rather than empty. */
+.focus__main {
+  padding: var(--space-8) 0 var(--space-6);
+}
+
+.focus__label {
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semi);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: var(--space-5);
+}
+
+/* ---- Commitments ---- */
+
+.commitments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.commitment {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  border-radius: var(--radius-md);
+  cursor: default;
+}
+
+.commitment__text {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.commitment__title {
+  font-size: var(--size-2xl);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.011em;
+  color: var(--text-primary);
+  text-wrap: balance;
+  /* A pasted URL is one very long word. Without this it refuses to wrap and
+     drags the whole page into horizontal scrolling. */
+  overflow-wrap: anywhere;
+}
+
+.commitment__age {
+  flex-shrink: 0;
+  min-width: 2.6rem;
+  text-align: right;
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The done control sits in the left margin and only resolves on hover or
+   keyboard focus, so the resting page is nothing but the commitments. */
+/* Hanging in the margin, outside the text column, so the commitments
+   themselves line up with the label above them. */
+.commitment__done {
+  position: absolute;
+  left: calc(var(--space-6) * -1);
+  top: 0.35em;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border-muted);
+  border-radius: 50%;
+  background: var(--bg-surface);
+  color: var(--accent-primary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-normal) var(--ease),
+              border-color var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease);
+}
+.commitment__done svg { width: 0.85rem; height: 0.85rem; }
+
+.commitment:hover .commitment__done,
+.commitment:focus-within .commitment__done,
+.commitment__done:focus-visible { opacity: 1; }
+
+.commitment__done:hover {
+  border-color: var(--accent-primary);
+  background: var(--focus-wash);
+}
+
+.focus__extra,
+.focus__nudge {
+  margin-top: var(--space-5);
+  font-size: var(--size-sm);
+  color: var(--text-muted);
+}
+.focus__nudge { margin-top: var(--space-2); color: var(--text-faint); }
+
+.focus__empty { padding: var(--space-4) 0; }
+.focus__empty-line {
+  font-size: var(--size-xl);
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+
+/* ---- Quick Capture control ---- */
+
+/* Capture belongs with the commitments — it is the next thing you might do,
+   not a footer control. Left edge shared with everything else in the column. */
+.focus__capture {
+  display: flex;
+  padding: var(--space-6) 0 0;
+}
+
+.capture-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--border-muted);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: var(--size-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease);
+}
+.capture-button:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-raised);
+}
+.capture-button__plus { font-size: 1.05rem; line-height: 1; color: var(--text-muted); }
+.capture-button:hover .capture-button__plus { color: var(--accent-primary); }
+.capture-button__key {
+  margin-left: var(--space-1);
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+}
+
+/* ---- Footer counts ---- */
+
+.focus__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: auto;          /* the counts sit at the foot of the page */
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Counts are readable but not inviting. They report that a backlog exists;
+   they are not meant to pull you into it every morning. */
+.count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0.2rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.count:hover { background: var(--bg-surface-subtle); }
+.count__label { font-size: var(--size-xs); color: var(--text-muted); }
+.count__value {
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semi);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.count--zero .count__value { color: var(--text-faint); font-weight: var(--weight-normal); }
+
+.focus__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ==================================================================
+   Weekly review prompt and indicator
+   ================================================================== */
+
+.review-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+.review-prompt__title { font-size: var(--size-md); font-weight: var(--weight-semi); }
+.review-prompt__sub { font-size: var(--size-sm); color: var(--text-muted); }
+.review-prompt__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+/* What is left after "Later". A word, in muted text, and nothing more. */
+.review-indicator {
+  margin-left: auto;
+  padding: 0.2rem 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font-size: var(--size-xs);
+  cursor: pointer;
+}
+.review-indicator:hover { color: var(--accent-primary); }
+
+/* ==================================================================
+   Board View
+   ================================================================== */
+
+.board {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  max-width: var(--board-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.board__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+.board__actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+/* ---- Inbox: a strip, not a column ----
+   Inbox is a holding pen you empty, not a place work lives. Making it a
+   sixth column would quietly turn it into another backlog. */
+
+.inbox {
+  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.inbox--empty { background: transparent; border-style: dashed; }
+
+.inbox__bar {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.inbox__heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semi);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.inbox__count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.inbox__hint { font-size: var(--size-xs); color: var(--text-muted); }
+
+.inbox__list {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--space-2);
+  min-height: 3.5rem;
+  scrollbar-width: thin;
+}
+.inbox__list > .card { flex: 0 0 16rem; }
+
+/* ---- Lanes ---- */
+
+/* The lane area scrolls as one surface, in both directions.
+   `overflow-y: visible` cannot be combined with `overflow-x: auto` — CSS
+   computes it to `auto` regardless — so the vertical scroll container exists
+   whether or not it is asked for. It is claimed deliberately here: it is what
+   makes the sticky lane headings work, and js/dragdrop.js autoscrolls this
+   element rather than the window because of it. */
+.board__scroller {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: var(--space-3);
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+
+.board__lanes {
+  display: flex;
+  gap: var(--lane-gap);
+  align-items: flex-start;
+  min-height: 22rem;
+}
+
+/* Width comes from the lane's weight in constants.js. Just Do It is narrower
+   and In Progress wider, so a stack of trivial chores cannot out-shout one
+   hard piece of work simply by being longer. On a laptop the board scrolls
+   sideways rather than crushing the columns to an unreadable width. */
+.lane {
+  flex: 0 0 calc(var(--lane-base-width) * var(--lane-weight, 1));
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Sticky, so the lane you are dragging into is still named when a long
+   Management column has scrolled its heading off the top. */
+.lane__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-3);
+  background: var(--bg-page);
+}
+.lane__title {
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semi);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.lane__count {
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.lane__note {
+  margin-left: auto;
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+}
+
+.lane__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 6rem;
+  padding-bottom: var(--space-5);
+}
+
+.lane__empty {
+  padding: var(--space-4) var(--space-3);
+  font-size: var(--size-sm);
+  color: var(--text-faint);
+}
+.lane__empty--inbox { padding: var(--space-2) var(--space-1); }
+
+/* In Progress: the one lane that gets deliberate emphasis, because it is
+   the one that drives Focus. */
+.lane--emphasis .lane__header { border-bottom-color: var(--accent-primary); }
+.lane--emphasis .lane__title { color: var(--accent-primary); }
+.lane--emphasis .lane__list {
+  padding: var(--space-2);
+  margin: calc(var(--space-2) * -1);
+  border-radius: var(--radius-lg);
+  background: var(--focus-wash);
+}
+
+/* Just Do It: lighter, narrower, quieter. Not broken — secondary. */
+.lane--secondary .lane__title { color: var(--text-muted); }
+.lane--secondary .card { padding: var(--space-2) var(--space-3); }
+.lane--secondary .card__title { font-size: var(--size-sm); color: var(--text-secondary); }
+
+/* Done: short-term closure, not storage. Muted, but solid — a dashed border
+   reads as "unfinished", which is the opposite of what this lane means.
+   The title stays at --text-secondary so completed work is still legible. */
+.lane--terminal .card {
+  background: var(--bg-surface-subtle);
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+.lane--terminal .card__title { color: var(--text-secondary); }
+
+/* ==================================================================
+   Cards
+   ================================================================== */
+
+.card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  cursor: default;
+  /* Vertical panning still scrolls the page on a touchscreen; a drag needs a
+     press-and-hold, which js/dragdrop.js implements. */
+  touch-action: pan-y;
+  transition: border-color var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease);
+}
+.card:hover { border-color: var(--border-muted); box-shadow: var(--shadow-raised); }
+
+.card__body { flex: 1; min-width: 0; }
+
+.card__title {
+  font-size: var(--size-md);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.card__notes {
+  margin-top: var(--space-1);
+  font-size: var(--size-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Age is information, not an alarm. Small and muted, but still AA-legible —
+   quiet comes from size and weight, never from unreadable contrast.
+
+   The column keeps its width whatever the string is. Without that, a card
+   ageing from "today" to "1d" overnight would reflow its own title, and the
+   ages down the right edge of a lane would sit at a different x on every row
+   instead of stacking into one register you can read at a glance. */
+.card__age {
+  flex-shrink: 0;
+  min-width: 2.6rem;
+  text-align: right;
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.1rem;
+}
+
+/* Done reads "yesterday" and "3d ago", which need more room than a lane of
+   plain day counts. */
+.lane--terminal .card__age { min-width: 4.5rem; }
+
+.card__done,
+.card__menu {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-normal) var(--ease), color var(--dur-fast) var(--ease);
+}
+.card__done { width: 1.15rem; height: 1.15rem; margin-top: 0.08rem; border: 1px solid var(--border-muted); border-radius: 50%; }
+.card__done svg { width: 0.72rem; height: 0.72rem; }
+.card__done:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
+
+.card__menu { width: 1.3rem; height: 1.3rem; border-radius: var(--radius-sm); letter-spacing: 0.05em; }
+.card__menu:hover { color: var(--text-secondary); background: var(--bg-surface-subtle); }
+
+.card:hover .card__done,
+.card:hover .card__menu,
+.card:focus-within .card__done,
+.card:focus-within .card__menu,
+.card__done:focus-visible,
+.card__menu:focus-visible { opacity: 1; }
+
+/* Where there is no hover — a touchscreen laptop, a tablet — reveal-on-hover
+   means never revealed. Show the controls outright instead. */
+@media (hover: none) {
+  .card__done, .card__menu, .commitment__done { opacity: 1; }
+}
+
+/* The top three in In Progress: what Focus will actually show. */
+.card--focus { border-left: 2px solid var(--accent-primary); }
+
+/* Marked only during the Prune step of the weekly review. */
+.card--stale .card__age {
+  color: var(--accent-secondary);
+  font-weight: var(--weight-semi);
+}
+
+.card--done .card__age { color: var(--text-faint); }
+
+/* ---- Drag states ---- */
+
+body.is-dragging { cursor: grabbing; user-select: none; }
+body.is-dragging .card { cursor: grabbing; }
+
+/* The real card, sitting in the slot it would land in. The lanes open up
+   around it as you move, so what you see is what you get. */
+.card--placeholder {
+  opacity: 0.34;
+  box-shadow: none;
+  border-style: dashed;
+}
+.card--placeholder .card__done,
+.card--placeholder .card__menu { opacity: 0 !important; }
+
+/* The copy that follows the pointer. */
+.card--proxy {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 60;
+  margin: 0;
+  pointer-events: none;
+  box-shadow: var(--shadow-drag);
+  border-color: var(--border-strong);
+  transform-origin: top left;
+  opacity: 0.97;
+}
+.card--proxy .card__done,
+.card--proxy .card__menu { opacity: 0; }
+
+/* ==================================================================
+   Review rail
+   ================================================================== */
+
+.rail {
+  margin-bottom: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.rail__main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.rail__eyebrow {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: var(--space-1);
+}
+.rail__progress { font-variant-numeric: tabular-nums; }
+
+.rail__title { font-size: var(--size-lg); font-weight: var(--weight-semi); }
+.rail__guide {
+  margin-top: var(--space-1);
+  font-size: var(--size-sm);
+  color: var(--text-secondary);
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+.rail__actions { display: flex; align-items: center; gap: var(--space-2); }
+.rail__exit {
+  margin-left: var(--space-2);
+  padding: 0.2rem 0.4rem;
+  border: 0; background: none;
+  color: var(--text-faint);
+  font-size: var(--size-xs);
+  cursor: pointer;
+}
+.rail__exit:hover { color: var(--text-secondary); }
+
+.rail__body {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.rail__status, .rail__empty, .rail__more {
+  font-size: var(--size-sm);
+  color: var(--text-muted);
+}
+.rail__more { margin-top: var(--space-2); font-size: var(--size-xs); }
+
+/* Bounded columns rather than 1fr: stretching three finished items across a
+   1920px window leaves each title marooned from its own date. */
+.lookback__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 22rem));
+  justify-content: start;
+  gap: var(--space-1) var(--space-6);
+}
+.lookback__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  font-size: var(--size-sm);
+}
+.lookback__title { color: var(--text-secondary); }
+.lookback__when { flex-shrink: 0; font-size: var(--size-xs); color: var(--text-faint); }
+
+.commit-list__items { display: flex; flex-direction: column; gap: var(--space-2); counter-reset: commit; }
+.commit-list__item {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--size-md);
+  color: var(--text-primary);
+}
+.commit-list__item::before {
+  counter-increment: commit;
+  content: counter(commit);
+  color: var(--text-faint);
+  font-size: var(--size-xs);
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.15rem;
+}
+.commit-list__item--extra { color: var(--text-muted); }
+
+/* ==================================================================
+   Dialogs
+   ================================================================== */
+
+.dialog {
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-dialog);
+  max-width: min(38rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  overflow: auto;
+}
+.dialog::backdrop { background: var(--bg-overlay); }
+
+.dialog__body { padding: var(--space-5); }
+.dialog__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.dialog__title { font-size: var(--size-lg); font-weight: var(--weight-semi); margin-bottom: var(--space-2); }
+.dialog__message { font-size: var(--size-sm); color: var(--text-secondary); margin-bottom: var(--space-4); }
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+.dialog__close {
+  padding: 0 var(--space-2);
+  border: 0; background: none;
+  color: var(--text-muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.dialog__close:hover { color: var(--text-primary); }
+
+/* ---- Quick Capture ----
+   Positioned near the top of the viewport rather than dead centre: it is a
+   note you jot, not a decision you are being asked to make. */
+.dialog--capture {
+  width: min(42rem, calc(100vw - 2rem));
+  margin-top: 18vh;
+  border-radius: var(--radius-lg);
+}
+
+.capture { padding: var(--space-4); }
+.capture__input {
+  width: 100%;
+  padding: var(--space-2) var(--space-1);
+  border: 0;
+  border-bottom: 1px solid var(--border-muted);
+  background: none;
+  font-size: var(--size-input);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-tight);
+}
+.capture__input:focus { outline: none; border-bottom-color: var(--accent-primary); }
+.capture__input::placeholder { color: var(--text-faint); }
+
+.capture__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+}
+.capture__hint { display: flex; align-items: center; gap: 0.15rem; color: var(--text-faint); }
+
+/* ---- Edit ---- */
+
+.edit { padding: var(--space-5); }
+.edit__title,
+.edit__notes {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+.edit__title { font-size: var(--size-lg); margin-bottom: var(--space-3); }
+.edit__notes { font-size: var(--size-sm); line-height: var(--leading-normal); resize: vertical; }
+.edit__title:focus, .edit__notes:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-wash); }
+
+/* ---- Help ---- */
+
+.help {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+  margin-top: var(--space-4);
+}
+.help dd { font-size: var(--size-sm); color: var(--text-secondary); }
+.help__note { margin-top: var(--space-4); font-size: var(--size-xs); color: var(--text-muted); }
+
+/* ==================================================================
+   Data panel
+   ================================================================== */
+
+.dialog--data { width: min(44rem, calc(100vw - 2rem)); }
+
+.data-panel__section {
+  padding-top: var(--space-5);
+  margin-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+.data-panel__section:first-of-type { border-top: 0; margin-top: var(--space-3); padding-top: 0; }
+
+.data-panel__heading {
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semi);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+.data-panel__lede {
+  font-size: var(--size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+  text-wrap: pretty;
+}
+.data-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.data-panel__paste {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md);
+  font-family: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: var(--size-xs);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+.data-panel__paste:focus { outline: none; border-color: var(--accent-primary); }
+
+.data-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  font-size: var(--size-sm);
+}
+.data-line__label { flex: 0 0 9rem; color: var(--text-muted); font-size: var(--size-xs); }
+.data-line__value { color: var(--text-primary); overflow-wrap: anywhere; }
+.data-line--ok .data-line__value { color: var(--ok); }
+.data-line--warn .data-line__value { color: var(--warn); }
+.data-line--bad .data-line__value { color: var(--danger); }
+.data-line--muted .data-line__value { color: var(--text-muted); }
+
+.data-note {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-muted);
+  font-size: var(--size-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.discarded__list { display: flex; flex-direction: column; gap: var(--space-1); }
+.discarded__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  font-size: var(--size-sm);
+}
+.discarded__title { flex: 1; color: var(--text-secondary); overflow-wrap: anywhere; }
+.discarded__when { flex-shrink: 0; font-size: var(--size-xs); color: var(--text-faint); }
+
+/* ---- Import report ---- */
+
+.dialog--report { width: min(40rem, calc(100vw - 2rem)); }
+.report__lede { font-size: var(--size-sm); color: var(--text-secondary); margin-bottom: var(--space-4); }
+.report__block { margin-top: var(--space-4); }
+.report__heading {
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semi);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+.report__list { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--size-xs); color: var(--text-secondary); }
+.report__list li { padding-left: var(--space-3); border-left: 2px solid var(--border-subtle); }
+.report__errors .report__list li { border-left-color: var(--danger); }
+.report__rejected .report__list li { border-left-color: var(--warn); }
+.report__more { margin-top: var(--space-2); font-size: var(--size-xs); color: var(--text-faint); }
+
+/* ==================================================================
+   Popup menu
+   ================================================================== */
+
+.menu {
+  position: fixed;
+  z-index: 70;
+  min-width: 12rem;
+  padding: var(--space-1);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dialog);
+}
+.menu__item {
+  display: block;
+  width: 100%;
+  padding: 0.32rem var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  font-size: var(--size-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.menu__item:hover, .menu__item:focus-visible { background: var(--bg-surface-subtle); outline-offset: -2px; }
+.menu__item--danger { color: var(--danger); }
+.menu__item--danger:hover { background: var(--danger-wash); }
+.menu__sep { height: 1px; margin: var(--space-1) var(--space-2); background: var(--border-subtle); }
+.menu__heading {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--size-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ==================================================================
+   Banners and toasts
+   ================================================================== */
+
+.banner-host { position: sticky; top: 0; z-index: 50; }
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--size-sm);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+.banner__text { flex: 1; text-wrap: pretty; }
+.banner__actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.banner--warn { background: var(--warn-wash); border-bottom-color: var(--warn); color: var(--text-primary); }
+.banner--bad  { background: var(--danger-wash); border-bottom-color: var(--danger); color: var(--text-primary); }
+.banner__dismiss {
+  padding: 0 var(--space-2);
+  border: 0; background: none;
+  color: var(--text-muted);
+  font-size: 1.15rem; line-height: 1;
+  cursor: pointer;
+}
+.banner__dismiss:hover { color: var(--text-primary); }
+
+.toasts {
+  position: fixed;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+.toast {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  font-size: var(--size-xs);
+  box-shadow: var(--shadow-raised);
+  animation: toast-in var(--dur-normal) var(--ease);
+}
+.toast--error { background: var(--danger); }
+.toast--ok { background: var(--ok); }
+.toast--leaving { opacity: 0; transition: opacity var(--dur-normal) var(--ease); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ==================================================================
+   View transition
+   ==================================================================
+   A short fade and a few pixels of travel when you switch views.
+
+   Applied by a class that app.js adds only on an actual view change —
+   never on the first paint. An animating container is an invisible
+   container until the animation runs, and the one thing a browser start
+   page must never do is show nothing.                                  */
+
+.view-enter { animation: view-in var(--dur-view) var(--ease); }
+
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ==================================================================
+   Narrower screens
+   ==================================================================
+   This is a desktop tool. The board scrolls sideways rather than
+   compressing lanes into unreadable slivers; only the chrome adapts.   */
+
+@media (max-width: 60rem) {
+  .focus { padding: var(--space-5) var(--space-4); }
+  .commitment__title { font-size: var(--size-xl); }
+  /* No room in the margin at this width, so the control comes back inside. */
+  .commitment { padding-left: var(--space-6); }
+  .commitment__done { left: 0; }
+  .focus__main { padding-top: var(--space-6); }
+  .board { padding: var(--space-4) var(--space-4) var(--space-5); }
+  .board__header { flex-direction: column; align-items: flex-start; }
+  .rail__main { flex-direction: column; }
+}
+
+/* ==================================================================
+   Reduced motion
+   ================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .view-enter { animation: none; }
+}
+
+/* Print: the board, on paper, without the chrome. */
+@media print {
+  .focus__capture, .board__actions, .card__done, .card__menu,
+  .banner-host, .toasts, .review-prompt__actions { display: none !important; }
+  body { background: var(--bg-surface); }
+  .card { break-inside: avoid; box-shadow: none; }
+}
