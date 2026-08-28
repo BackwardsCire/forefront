@@ -18,9 +18,12 @@ keeping the right handful of things visible, writing down new obligations
 without breaking your concentration, and being made to decide — once a week —
 what actually deserves your attention.
 
-It is a single folder of HTML, CSS and JavaScript. There is no build step, npm
-install, account or external service. A tiny local server gives Chrome, Firefox
-and Safari the same safe browser-storage origin on macOS.
+It is HTML, CSS and JavaScript that runs entirely in your browser — there is no
+backend, no account, no external service, and no network request of any kind.
+It ships two ways: a folder you open, or [one self-contained
+`forefront.html`](forefront.html) you can drop anywhere and double-click.
+Firefox and Safari need a small static file server for their storage rules; see
+[Install](#install).
 
 ---
 
@@ -64,98 +67,101 @@ never *"here are 37 things to feel guilty about."*
 
 ## Install
 
-**You download the whole folder, and you run it from there.** There is no
-installer, no account, no `npm install`, and nothing is ever uploaded — the page
-runs from your own disk and talks to nothing but itself.
+**There is nothing to install and no server to run.** Forefront is HTML, CSS
+and JavaScript that runs entirely inside your browser. There is no backend, no
+account, no `npm install`, and no network request of any kind — the page talks
+to nothing but itself, including the first time you open it.
 
-### 1. Download it
+Pick the route that suits the machine:
 
-On this page: the green **Code** button → **Download ZIP**. Unzip it somewhere
-you intend to keep, like `Documents/Forefront`.
+### The one file — best for a work laptop
 
-If you use git, `git clone https://github.com/BackwardsCire/forefront.git` does
-the same job.
+Download **[`forefront.html`](forefront.html)** — the entire application in a
+single file. On that page, use the **Download raw file** button (or right-click
+→ *Save link as*). Put it wherever you like: Documents, the desktop, a synced
+OneDrive folder. Double-click it.
 
-### 2. Start it
+That is the whole install. Nothing to unzip, nothing to permit, nothing left
+running in the background, and nothing for IT to approve. It is the same
+application as the folder below — the two stylesheets and eleven scripts
+inlined in place — and the full browser test suite is run against it to prove
+that rather than assume it.
 
-Double-click the launcher for your machine:
+Works in **Chrome and Edge**. For Firefox or Safari, see the launcher below.
 
-| | |
-|---|---|
-| **macOS** | `start-mac.command` |
-| **Windows** | `start-windows.cmd` |
-| **Linux** | `start-linux.sh` |
+### The folder — best if you want to read or change it
 
-It opens `http://127.0.0.1:8765/` in your browser and leaves a small terminal
-window behind. **That window is the server — leave it open while you are using
-Forefront**, and close it when you are done for the day.
+The green **Code** button → **Download ZIP**, then unzip it somewhere you
+intend to keep. Double-click **`index.html`** inside.
 
-The launchers need **Node.js or Python 3**, whichever you already have. macOS
-and most Linux installs ship Python 3 already. On Windows you probably have
-neither: [nodejs.org](https://nodejs.org) is the smaller download, and the
-default options are correct.
+Same application, split into readable files. `git clone
+https://github.com/BackwardsCire/forefront.git` does the same job.
 
-Two things that catch people out the first time:
+### The launcher — only if you use Firefox or Safari
 
-- **macOS** may say the file "cannot be opened because it is from an
-  unidentified developer". Right-click the launcher → **Open** → **Open**. You
-  only do this once. (If nothing happens at all, the ZIP dropped the
-  executable bit: open Terminal in the folder and run
-  `chmod +x start-mac.command`.)
-- **Linux** needs the same bit: `chmod +x start-linux.sh` once.
+Double-click `start-mac.command`, `start-windows.cmd` or `start-linux.sh`. It
+opens `http://127.0.0.1:8765/` and leaves a terminal window behind; keep that
+window open while you use Forefront.
 
-### 3. Make it the page your browser opens
+**This is not a backend.** It is a hundred lines of static file server whose
+only job is to give the page a normal `http://localhost` origin, because two
+browser rules bite pages opened straight from disk:
 
-This is the part that makes Forefront work at all — it is designed to turn up in
-your day whether or not you remember it. Set `http://127.0.0.1:8765/` as your
-browser's start page and new-tab page; see
-[Making it your start page](#making-it-your-start-page) for the per-browser
-steps.
+- Safari refuses browser storage to `file://` pages outright, so nothing you do
+  would be saved.
+- Every `file://` page in Chrome shares *one* storage area — `location.origin`
+  is the bare string `"file://"` — so any other local HTML file you open could
+  read Forefront's data. (Connecting a data file, below, removes this
+  entirely.)
 
-### Chrome and Edge: the no-launcher shortcut
+Neither rule affects Chrome or Edge users who connect a data file, which is why
+the first two routes are listed first. The launcher needs Node.js or Python 3;
+macOS and most Linux installs already have Python 3, and on Windows
+[nodejs.org](https://nodejs.org) is the smaller download.
 
-If you only use Chrome or Edge, you can skip step 2 entirely and just
-**double-click `index.html`** in the folder you unzipped. No Node, no Python, no
-terminal window, nothing to leave running.
+Two things that catch people out the first time: **macOS** may say the launcher
+is "from an unidentified developer" — right-click → **Open** → **Open**, once.
+**Linux** needs `chmod +x start-linux.sh` once.
 
-It is genuinely simpler, and there are two real trade-offs. Browser storage for
-local files is shared with every other local page you open, so it is not a
-private place to keep work notes — connect a data file (below) and the problem
-goes away. And Firefox and Safari restrict local pages differently, so this
-route is Chrome and Edge only.
+### Which route, in one table
+
+| | One file | Folder | Launcher |
+|---|---|---|---|
+| Anything to install | No | No | Node.js or Python 3 |
+| Anything left running | No | No | A terminal window |
+| Chrome / Edge | Yes | Yes | Yes |
+| Firefox / Safari | No | No | Yes |
+| Storage private to Forefront | With a data file | With a data file | Yes |
+| Good for editing the source | No | Yes | Yes |
 
 ### What you will see first
 
-An empty board and a prompt to write something down. Two files come with the
-download if you want more than that:
-
-- `sample-data/example.json` — a populated demo board. **Data → Import**, paste
-  or choose it, then **Replace my data** to look around. Import it again with
-  **Replace** whenever you want to reset.
-- `sample-data/empty.json` — a pristine empty dataset, if you would rather start
-  from a file than from browser storage.
-
-The demo carries real dates, so its card ages grow and its Done lane empties out
-as the file sits in the repository. `node tools/make-example.js` regenerates it
-against today. Nothing about the app depends on this — it only affects how good
-the demo looks.
+An empty board and a prompt to write something down. If you would rather look
+around a populated one, the folder download includes
+`sample-data/example.json` — open **Data → Import**, choose it, then **Replace
+my data**. Import it again whenever you want to reset.
 
 ### Where to put your real data
 
-Browser storage works and is the default, but it is a safety copy, not a backup:
-browsers evict it. In Chrome or Edge, open **Data → Create a new data file…**
-and put the file somewhere synced and outside the download folder —
-`OneDrive/Forefront/forefront-data.json` is the arrangement this was built for.
-Then Forefront writes straight through to it and you can move the app folder,
-reinstall, or switch machines without losing anything.
+Browser storage works out of the box and is the default, but it is a safety
+copy rather than a backup: browsers evict it, and on `file://` it is shared
+with other local pages.
+
+**In Chrome or Edge, open Data → Create a new data file… and put the file in a
+synced folder** — `OneDrive/Forefront/forefront-data.json` is the arrangement
+this was built for. Forefront then writes straight through to it, your data
+stops living in shared browser storage, and you can move the app, replace it,
+or switch machines without losing anything. This works from the single file and
+from the folder, with no server involved.
 
 In Firefox and Safari, use **Data → Download JSON** periodically instead; those
 browsers do not expose Chrome's write-to-a-chosen-file API.
 
 ### Updating
 
-Download the ZIP again and replace the folder. Your data is not in it — it is in
-browser storage or in the data file you chose — so there is nothing to migrate.
+Download `forefront.html` again and overwrite it, or replace the folder. Your
+data is not inside either one — it is in browser storage or in the data file
+you chose — so there is nothing to migrate.
 
 ---
 
@@ -635,11 +641,13 @@ In Firefox or Safari, export JSON there periodically instead. Only
 
 ## Known limitations
 
-- **Use localhost for cross-browser support.** Direct `file://` behavior differs
-  across Chrome, Firefox and Safari and is not the common supported setup.
-- **The launchers need Node.js or Python 3.** Neither ships with Windows. There
-  is no bundled runtime, because bundling one would mean a build step and a
-  platform-specific download, and this project has neither.
+- **`file://` is verified for Chrome and Edge only.** Safari refuses storage to
+  local pages outright; Firefox's behaviour there has not been measured, so both
+  are pointed at the launcher rather than guessed at.
+- **Firefox and Safari need the launcher**, which needs Node.js or Python 3 —
+  neither of which ships with Windows. There is no bundled runtime, because
+  bundling one would mean a platform-specific download. Chrome and Edge need
+  none of this and open the file directly.
 - **Browser storage is shared with every other local file** you open, when
   running from `file://`. Connect a data file for anything confidential.
 - **Browser storage is evictable** — it is a safety copy, not a backup. Connect
@@ -661,7 +669,8 @@ In Firefox or Safari, export JSON there periodically instead. Only
 
 ```
 forefront/
-├── index.html            application entry point, served by the launcher
+├── index.html            application entry point, opened directly or served
+├── forefront.html        generated: the whole app inlined into one file
 ├── assets/
 │   └── forefront-mark*   the mark, light and dark, for anything outside the app
 ├── css/
@@ -708,6 +717,9 @@ node tools/crossbrowsertest.js firefox # localhost smoke test via Firefox WebDri
 node tools/crossbrowsertest.js safari  # same smoke test via Safari WebDriver on macOS
 node tools/make-example.js   # regenerate example.json with fresh dates
 node tools/make-template.js  # regenerate sample-data/template.jsonc from the format guide
+node tools/build-single-file.js         # rebuild forefront.html from the sources
+node tools/build-single-file.js --check # fail if forefront.html is out of date
+node tools/browsertest.js --single      # run the whole suite against forefront.html
 node tools/screenshot.js DIR # render the views to PNGs, light and dark
 ```
 

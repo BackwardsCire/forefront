@@ -25,13 +25,23 @@ if (!chrome) { console.error('No Chrome/Chromium found; skipping browser tests.'
 
 let runSeq = 0;
 
+/**
+ * Which page the whole suite runs against.
+ *
+ * `--single` points every scenario at the built one-file distribution instead
+ * of index.html. Same tests, same assertions — the point is to prove the built
+ * file is the same application, not a lookalike, so it is checked by running
+ * the real suite rather than by eyeballing a screenshot of it.
+ */
+const ENTRY = process.argv.includes('--single') ? 'forefront.html' : 'index.html';
+
 function runPage(seedJSON, testBody, opts = {}) {
   // A fresh profile per run. Reusing one directory across back-to-back Chrome
   // launches intermittently hits the profile lock from the previous instance,
   // which shows up as a page that never boots.
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'ff-chrome-'));
 
-  const template = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const template = fs.readFileSync(path.join(root, ENTRY), 'utf8');
 
   const seed = `<script>
     ${opts.shimRAF ? `
@@ -1243,5 +1253,7 @@ report('Focus shows Just Do It beside the commitments', runPage(example, `
   ok('and does not open Edit', !document.querySelector('.edit__title'));
 `));
 
-console.log(fail === 0 ? `\n  ✓ ${pass} browser checks passed\n` : `\n  ${pass} passed, ${fail} FAILED\n`);
+console.log(fail === 0
+  ? `\n  ✓ ${pass} browser checks passed against ${ENTRY}\n`
+  : `\n  ${pass} passed, ${fail} FAILED against ${ENTRY}\n`);
 process.exit(fail === 0 ? 0 : 1);
