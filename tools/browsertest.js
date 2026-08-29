@@ -33,7 +33,12 @@ let runSeq = 0;
  * file is the same application, not a lookalike, so it is checked by running
  * the real suite rather than by eyeballing a screenshot of it.
  */
-const ENTRY = process.argv.includes('--single') ? 'forefront.html' : 'index.html';
+function chosenEntry() {
+  const at = process.argv.indexOf('--entry');
+  if (at !== -1 && process.argv[at + 1]) return process.argv[at + 1];
+  return process.argv.includes('--single') ? 'forefront.html' : 'index.html';
+}
+const ENTRY = chosenEntry();
 
 function runPage(seedJSON, testBody, opts = {}) {
   // A fresh profile per run. Reusing one directory across back-to-back Chrome
@@ -41,7 +46,11 @@ function runPage(seedJSON, testBody, opts = {}) {
   // which shows up as a page that never boots.
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'ff-chrome-'));
 
-  const template = fs.readFileSync(path.join(root, ENTRY), 'utf8');
+  // An absolute --entry lets a copy of the app be checked wherever it landed —
+  // a pasted file, a download, a copy on a memory stick. The temp page is still
+  // written into the repo root, which is fine because a built single file has
+  // no relative references left to resolve.
+  const template = fs.readFileSync(path.isAbsolute(ENTRY) ? ENTRY : path.join(root, ENTRY), 'utf8');
 
   const seed = `<script>
     ${opts.shimRAF ? `

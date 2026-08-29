@@ -88,6 +88,19 @@ that rather than assume it.
 
 Works in **Chrome and Edge**. For Firefox or Safari, see the launcher below.
 
+**If you cannot download anything either**, the file is plain text — open it,
+select all, copy, paste into any text editor and save it. That works, and it is
+tested: the full browser suite is run against a pasted copy, including one
+saved with Windows line endings. Two things to get right when you save it:
+
+- **Name it `forefront.html`**, not `.txt`. In Notepad that means setting *Save
+  as type* to *All Files*, or the file will be saved as `forefront.html.txt`
+  and open as text.
+- **Save as UTF-8**, which is Notepad's default. The application contains a few
+  hundred non-ASCII characters — arrows in the shortcut list, the ⌘ symbol,
+  curly quotes in labels. Save it in the old Windows codepage instead and
+  everything still *works*, but `Alt + ↑ ↓` renders as `Alt + ? ?`.
+
 ### The hosted copy — nothing to download at all
 
 **<https://backwardscire.github.io/forefront/>**
@@ -751,6 +764,7 @@ node tools/make-template.js  # regenerate sample-data/template.jsonc from the fo
 node tools/build-single-file.js         # rebuild forefront.html from the sources
 node tools/build-single-file.js --check # fail if forefront.html is out of date
 node tools/browsertest.js --single      # run the whole suite against forefront.html
+node tools/browsertest.js --entry PATH  # ...or against any copy, wherever it landed
 node tools/screenshot.js DIR # render the views to PNGs, light and dark
 ```
 

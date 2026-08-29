@@ -282,6 +282,7 @@ node tools/check-samples.js   # samples valid; empty.json matches createEmptyDat
 node tools/make-template.js   # regenerate sample-data/template.jsonc
 node tools/browsertest.js     # real index.html in headless Chrome
 node tools/browsertest.js --single      # the same suite against forefront.html
+node tools/browsertest.js --entry PATH  # ...or against a copy anywhere on disk
 node tools/build-single-file.js         # rebuild forefront.html
 node tools/build-single-file.js --check # fail if forefront.html is stale
 node tools/crossbrowsertest.js firefox|safari   # WebDriver smoke test
