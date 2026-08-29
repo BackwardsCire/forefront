@@ -8,6 +8,7 @@ global.window = global;
 if (!global.crypto) global.crypto = require('crypto').webcrypto;
 
 require(path.join(root, 'js', 'constants.js'));
+require(path.join(root, 'js', 'changelog.js'));
 require(path.join(root, 'js', 'model.js'));
 
 module.exports = { FF: global.window.FF, root };

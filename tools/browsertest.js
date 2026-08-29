@@ -1084,7 +1084,7 @@ report('Theme', runPage(example, `
   // The control itself, in Focus View.
   key(document.body, 'f');
   await until(() => document.querySelector('.focus'), 'Focus View');
-  const toggle = document.querySelector('.focus__actions .btn--icon');
+  const toggle = document.querySelector('.app-footer__actions .btn--icon');
   ok('Focus View has a theme control', !!toggle);
   ok('it is labelled with the current state', /^Theme: /.test(toggle.getAttribute('aria-label')));
   ok('and names the resolved theme while following the system',
@@ -1107,7 +1107,7 @@ report('Theme', runPage(example, `
   // The board has its own copy of the control.
   key(document.body, 'b');
   await until(() => document.querySelector('.board'), 'the board');
-  ok('the board header has one too', !!document.querySelector('.board__actions .btn--icon'));
+  ok('the board has the same footer control', !!document.querySelector('.app-footer__actions .btn--icon'));
 `));
 
 report('A stored dark preference survives the reload', runPage(example, `
@@ -1260,6 +1260,63 @@ report('Focus shows Just Do It beside the commitments', runPage(example, `
   await wait(60);
   ok('Enter on the tick is not swallowed by the row', tickLive);
   ok('and does not open Edit', !document.querySelector('.edit__title'));
+`));
+
+
+report('The footer is the same in every view', runPage(example, `
+  const utilities = () => all('.app-footer__actions .btn').map(b => b.textContent.trim()).filter(Boolean);
+
+  ok('Focus has a footer', !!document.querySelector('.app-footer'));
+  const inFocus = utilities();
+  ok('with Data and Shortcuts in it', inFocus.includes('Data') && inFocus.includes('Shortcuts'));
+  ok('and the view switch', inFocus.includes('Show Board'));
+  ok('counts sit in the same footer', !!document.querySelector('.app-footer .counts'));
+
+  key(document.body, 'b');
+  await until(() => document.querySelector('.board'), 'the board');
+
+  ok('the board has a footer too', !!document.querySelector('.app-footer'));
+  const inBoard = utilities();
+  ok('with the same utilities', inBoard.includes('Data') && inBoard.includes('Shortcuts'));
+  ok('and its own view switch', inBoard.includes('Focus'));
+  ok('the board keeps no counts', !document.querySelector('.app-footer .counts'));
+
+  // The utilities used to be duplicated into the board header, which is why
+  // they were in two different places depending on where you were.
+  const header = all('.board__actions .btn').map(b => b.textContent.trim());
+  ok('the board header holds only what you do from the board',
+     header.length === 1 && /Quick Capture/.test(header[0]));
+
+  ok('the theme control is in the footer, not the header',
+     !!document.querySelector('.app-footer__actions .btn--icon') &&
+     !document.querySelector('.board__actions .btn--icon'));
+`));
+
+report('The version badge opens the changelog', runPage(example, `
+  const badge = document.querySelector('.brand .version');
+  ok('Focus shows a version beside the wordmark', !!badge);
+  eq('and it is the running version', badge.textContent.trim(), 'v' + window.FF.C.VERSION);
+  ok('it says what it does', /see what changed/.test(badge.getAttribute('aria-label')));
+
+  click(badge);
+  const dialog = await until(() => document.querySelector('.dialog--changelog'), 'the changelog');
+  ok('the dialog names the version', text('.dialog__title', dialog).indexOf(window.FF.C.VERSION) !== -1);
+
+  const releases = all('.changelog__release', dialog);
+  eq('every release is listed', releases.length, window.FF.CHANGELOG.length);
+  ok('the newest is marked as the one you have',
+     /you have this/.test(text('.changelog__now', releases[0]) || ''));
+  ok('entries are user-facing text', all('.changelog__changes li', dialog).length >= 4);
+  ok('it explains what the number means', /reads anything else/.test(dialog.textContent));
+
+  escapeDialog(dialog);
+  await until(() => !document.querySelector('.dialog--changelog'), 'it to close');
+
+  key(document.body, 'b');
+  await until(() => document.querySelector('.board'), 'the board');
+  ok('the board shows the same badge', !!document.querySelector('.brand .version'));
+  ok('and the wordmark beside it still goes back to Focus',
+     !!document.querySelector('.brand .wordmark--button'));
 `));
 
 console.log(fail === 0

@@ -555,13 +555,69 @@
     return button;
   }
 
+  /**
+   * The version badge that sits beside the wordmark in both views.
+   *
+   * Quiet enough to ignore and specific enough to be worth clicking: it is the
+   * only place the application says which build you are looking at, which
+   * matters now that the same board can be opened from a hosted copy, a single
+   * file and a folder that may all be different ages.
+   */
+  function versionTag(onSelect) {
+    return el('button', {
+      type: 'button',
+      class: 'version',
+      title: 'What changed in ' + FF.C.APP_NAME + ' ' + FF.C.VERSION,
+      'aria-label': FF.C.APP_NAME + ' version ' + FF.C.VERSION + ' — see what changed',
+      text: 'v' + FF.C.VERSION,
+      onclick: onSelect
+    });
+  }
+
+  /**
+   * The footer, identical in every view.
+   *
+   * It used to exist only in Focus, with the same controls duplicated into the
+   * top-right of the board — so Data and Shortcuts were in two different places
+   * depending on where you happened to be. They are utilities, not part of
+   * either view, and now they live in one place that does not move.
+   *
+   * The view-switch button is the only thing that differs, because it is the
+   * only thing that means something different in each place.
+   *
+   *   opts.leading   a node for the left-hand side (Focus puts lane counts there)
+   *   opts.primary   {label, onClick} — the view switch
+   */
+  function appFooter(actions, opts) {
+    opts = opts || {};
+
+    return el('footer', { class: 'app-footer' }, [
+      opts.leading || el('div', { class: 'app-footer__leading' }),
+      el('div', { class: 'app-footer__actions' }, [
+        opts.primary ? el('button', {
+          type: 'button', class: 'btn btn--ghost', text: opts.primary.label,
+          onclick: opts.primary.onClick
+        }) : null,
+        el('button', {
+          type: 'button', class: 'btn btn--faint', text: 'Data',
+          onclick: actions.openData
+        }),
+        el('button', {
+          type: 'button', class: 'btn btn--faint', text: 'Shortcuts',
+          onclick: actions.showHelp
+        }),
+        themeControl(actions.rerender)
+      ])
+    ]);
+  }
+
   function prefersReducedMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   FF.ui = {
     el: el, clear: clear, $: $, $$: $$,
-    svgNode: svgNode, icon: icon, themeControl: themeControl,
+    svgNode: svgNode, icon: icon, themeControl: themeControl, versionTag: versionTag, appFooter: appFooter,
     formatToday: formatToday, formatShort: formatShort, formatTime: formatTime,
     openDialog: openDialog, confirmDialog: confirmDialog, anyDialogOpen: anyDialogOpen,
     toast: toast, setBanner: setBanner, announce: announce,

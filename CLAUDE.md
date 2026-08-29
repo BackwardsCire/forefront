@@ -80,6 +80,8 @@ css/tokens.css    every colour, size, space, in both themes. No literal
                   colour lives elsewhere.
 css/styles.css    components
 js/constants.js   every tunable value (Done window, commitment count, keys…)
+js/changelog.js   release notes the app itself can show — there is no network,
+                  so a CHANGELOG.md it could not read would be no use
 js/theme.js       light / dark / match system — pure state, no DOM beyond
                   one attribute on <html>
 js/model.js       data shape, validation, migration, tolerant import — pure
@@ -172,6 +174,36 @@ returns immediately so the page paints in the same tick (~120ms from disk);
 `storage.resume()` then does everything asynchronous — probing IndexedDB,
 restoring a file handle, checking permission — and only redraws if it found
 something different. A browser start page must never show a blank frame.
+
+## Versioning
+
+**MAJOR is SCHEMA_VERSION.** Not modelled on it, not usually equal to it — the
+same number, asserted in `selftest.js`. The version then answers the only
+question that can cost a user anything: whether a file this copy wrote can be
+read by the copy on their other machine. Anything 1.x reads anything else 1.x.
+
+MINOR is anything a user would notice — a capability, an interaction, a
+reversed non-goal. PATCH is everything else. Bumping MAJOR means bumping
+`SCHEMA_VERSION` and writing the migration in `model.js`; do not bump one
+without the other.
+
+Every bump adds an entry to the top of `js/changelog.js`, phrased for the person
+using Forefront. `selftest.js` checks that the newest entry matches `C.VERSION`,
+that versions and dates descend, and that no entry claims a major the schema
+cannot read.
+
+## Chrome cannot open a file dialog where the app lives
+
+Worth knowing before someone "fixes" it: `showSaveFilePicker` has no way to
+start in the page's own directory, and a `file://` page is not told where it
+sits anyway. `startIn` only accepts well-known folders, so Documents is the
+first-run guess and `id` makes the browser remember whatever the user picked
+after that.
+
+It is also the wrong default to want. Beside a cloned repository the data file
+is one mistaken `git add` from being published — the exact thing `.gitignore`
+and the privacy section exist to prevent — and beside a downloaded
+`forefront.html` it sits next to a file the user overwrites to update.
 
 ## Invariants
 

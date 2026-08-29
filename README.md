@@ -69,132 +69,102 @@ never *"here are 37 things to feel guilty about."*
 **There is nothing to install and no server to run.** Forefront is HTML, CSS
 and JavaScript that runs entirely inside your browser. There is no backend, no
 account, no `npm install`, and no network request of any kind — the page talks
-to nothing but itself, including the first time you open it.
+to nothing but itself.
 
-Pick the route that suits the machine:
+**Two routes cover almost everyone.** Open the hosted copy, or download one
+file. The other two below exist for two narrow cases and can be ignored
+otherwise.
 
-### The one file — best for a work laptop
-
-Download **[`forefront.html`](forefront.html)** — the entire application in a
-single file. On that page, use the **Download raw file** button (or right-click
-→ *Save link as*). Put it wherever you like: Documents, the desktop, a synced
-OneDrive folder. Double-click it.
-
-That is the whole install. Nothing to unzip, nothing to permit, nothing left
-running in the background, and nothing for IT to approve. It is the same
-application as the folder below — the two stylesheets and eleven scripts
-inlined in place — and the full browser test suite is run against it to prove
-that rather than assume it.
-
-Works in **Chrome and Edge**. For Firefox or Safari, see the launcher below.
-
-**If you cannot download anything either**, the file is plain text — open it,
-select all, copy, paste into any text editor and save it. That works, and it is
-tested: the full browser suite is run against a pasted copy, including one
-saved with Windows line endings. Two things to get right when you save it:
-
-- **Name it `forefront.html`**, not `.txt`. In Notepad that means setting *Save
-  as type* to *All Files*, or the file will be saved as `forefront.html.txt`
-  and open as text.
-- **Save as UTF-8**, which is Notepad's default. The application contains a few
-  hundred non-ASCII characters — arrows in the shortcut list, the ⌘ symbol,
-  curly quotes in labels. Save it in the old Windows codepage instead and
-  everything still *works*, but `Alt + ↑ ↓` renders as `Alt + ? ?`.
-
-### The hosted copy — nothing to download at all
+### Open it — nothing to download
 
 **<https://backwardscire.github.io/forefront/>**
 
-The same application, served as a static page from GitHub Pages. Open it and
-use it; set it as your start page and you are done. It works in **every**
-browser including Safari and Firefox, because a real `https://` origin has none
-of the `file://` storage restrictions below.
+The same application, served as a static page. Open it, set it as your start
+page, done. It works in **every** browser including Safari and Firefox, because
+a real `https://` origin has none of the `file://` storage restrictions.
 
 Your data still never leaves your machine. The page is delivered over the
-network; nothing it stores is. There is no backend to send anything to.
+network; nothing it stores is. There is no backend to send it to.
 
-Two things to know before choosing this route:
+It needs a connection to load, and corporate networks sometimes block
+`github.io` as an uncategorised domain. If it does not open at work, nothing is
+wrong with it — use the file below.
 
-- **It needs a connection to load.** Once open it keeps working, but this is
-  the one route that is not usable on a plane. The single file above is.
-- **Your board does not follow you between routes.** Browsers keep storage per
-  origin, so the hosted copy and a local file are separate buckets. If you use
-  both, connect the same data file in each (Chrome and Edge), or move the board
-  across with **Data → Download JSON** and **Import**.
+### Download one file — best for a work laptop
 
-Corporate networks sometimes block `github.io` as an uncategorised or personal
-domain. If it does not load on your work machine, nothing is wrong with it —
-use `forefront.html`, which needs no network at all.
+**[`forefront.html`](forefront.html)** is the entire application in a single
+file. Use the **Download raw file** button on that page, put it anywhere —
+Documents, the desktop, a synced OneDrive folder — and double-click it.
 
-### The folder — best if you want to read or change it
+Nothing to unzip, nothing to permit, nothing left running, nothing for IT to
+approve. It is the same application as the source folder, with the stylesheets
+and scripts inlined, and the full browser test suite is run against it to prove
+that rather than assume it. **Chrome and Edge.**
 
-The green **Code** button → **Download ZIP**, then unzip it somewhere you
-intend to keep. Double-click **`index.html`** inside.
+**If you cannot download anything either**, the file is plain text — open it,
+select all, copy, paste into a text editor and save it. That is tested too,
+including a copy saved with Windows line endings. Two things to get right:
 
-Same application, split into readable files. `git clone
-https://github.com/BackwardsCire/forefront.git` does the same job.
+- **Name it `forefront.html`, not `.txt`.** In Notepad, set *Save as type* to
+  *All Files*.
+- **Save as UTF-8**, Notepad's default. In the old Windows codepage everything
+  still works, but `Alt + ↑ ↓` renders as `Alt + ? ?`.
 
-### The launcher — only if you use Firefox or Safari
+### If you use Safari or Firefox and cannot reach the hosted copy
 
-Double-click `start-mac.command`, `start-windows.cmd` or `start-linux.sh`. It
-opens `http://127.0.0.1:8765/` and leaves a terminal window behind; keep that
-window open while you use Forefront.
+Only then do you need the launcher: `start-mac.command`, `start-windows.cmd` or
+`start-linux.sh`. It opens `http://127.0.0.1:8765/` and leaves a terminal window
+open while you work.
 
-**This is not a backend.** It is a hundred lines of static file server whose
-only job is to give the page a normal `http://localhost` origin, because two
-browser rules bite pages opened straight from disk:
+**It is not a backend** — it is a hundred lines of static file server whose only
+job is to give the page a normal `http://localhost` origin, because Safari
+refuses browser storage to `file://` pages outright and would save nothing. It
+needs Node.js or Python 3.
 
-- Safari refuses browser storage to `file://` pages outright, so nothing you do
-  would be saved.
-- Every `file://` page in Chrome shares *one* storage area — `location.origin`
-  is the bare string `"file://"` — so any other local HTML file you open could
-  read Forefront's data. (Connecting a data file, below, removes this
-  entirely.)
+macOS may call it "from an unidentified developer" — right-click → **Open**,
+once. Linux needs `chmod +x start-linux.sh` once.
 
-Neither rule affects Chrome or Edge users who connect a data file, which is why
-the first two routes are listed first. The launcher needs Node.js or Python 3;
-macOS and most Linux installs already have Python 3, and on Windows
-[nodejs.org](https://nodejs.org) is the smaller download.
+### If you want to read or change the code
 
-Two things that catch people out the first time: **macOS** may say the launcher
-is "from an unidentified developer" — right-click → **Open** → **Open**, once.
-**Linux** needs `chmod +x start-linux.sh` once.
+The green **Code** button → **Download ZIP**, or `git clone
+https://github.com/BackwardsCire/forefront.git`. Open `index.html` inside.
+`forefront.html` is generated from these sources by
+`node tools/build-single-file.js`.
 
-### Which route, in one table
+### Which one, in one table
 
-| | Hosted | One file | Folder | Launcher |
+| | Hosted | One file | Launcher | Folder |
 |---|---|---|---|---|
-| Anything to download | No | One file | A ZIP | A ZIP |
-| Anything to install | No | No | No | Node.js or Python 3 |
-| Anything left running | No | No | No | A terminal window |
-| Chrome / Edge | Yes | Yes | Yes | Yes |
-| Firefox / Safari | Yes | No | No | Yes |
-| Works with no connection | No | Yes | Yes | Yes |
-| Storage private to Forefront | Yes | With a data file | With a data file | Yes |
-| Good for editing the source | No | No | Yes | Yes |
-
-If a corporate network blocks `github.io`, the one-file route is the fallback
-that needs nothing from the network.
+| To download | Nothing | One file | A ZIP | A ZIP |
+| To install | Nothing | Nothing | Node or Python 3 | Nothing |
+| Left running | Nothing | Nothing | A terminal window | Nothing |
+| Works offline | No | Yes | Yes | Yes |
+| Safari / Firefox | Yes | No | Yes | No |
 
 ### What you will see first
 
 An empty board and a prompt to write something down. If you would rather look
-around a populated one, the folder download includes
-`sample-data/example.json` — open **Data → Import**, choose it, then **Replace
-my data**. Import it again whenever you want to reset.
+around a populated one, the source folder includes `sample-data/example.json` —
+**Data → Import**, choose it, then **Replace my data**.
 
 ### Where to put your real data
 
-Browser storage works out of the box and is the default, but it is a safety
-copy rather than a backup: browsers evict it, and on `file://` it is shared
-with other local pages.
+Browser storage works out of the box and is the default, but it is a safety copy
+rather than a backup: browsers evict it, and on `file://` it is shared with
+every other local page you open.
 
 **In Chrome or Edge, open Data → Create a new data file… and put the file in a
 synced folder** — `OneDrive/Forefront/forefront-data.json` is the arrangement
-this was built for. Forefront then writes straight through to it, your data
-stops living in shared browser storage, and you can move the app, replace it,
-or switch machines without losing anything. This works from the single file and
-from the folder, with no server involved.
+this was built for. Forefront then writes straight through to it, and you can
+move the app, replace it, or switch machines without losing anything.
+
+Forefront deliberately **cannot** default that file to the folder it is running
+from, and would not if it could. A web page is not told where it sits on disk,
+and the save dialog will not let one point there — but more to the point, next
+to a cloned repository your data is one mistaken `git add` from being published,
+and next to a downloaded `forefront.html` it sits beside a file you overwrite to
+update. The dialog opens in Documents the first time and remembers wherever you
+chose after that.
 
 In Firefox and Safari, use **Data → Download JSON** periodically instead; those
 browsers do not expose Chrome's write-to-a-chosen-file API.
@@ -202,9 +172,9 @@ browsers do not expose Chrome's write-to-a-chosen-file API.
 ### Updating
 
 The hosted copy updates itself. Otherwise download `forefront.html` again and
-overwrite it, or replace the folder. Your data is not inside any of them — it
-is in browser storage or in the data file you chose — so there is nothing to
-migrate.
+overwrite it, or replace the folder. Your data is not inside any of them, so
+there is nothing to migrate. Click the version number beside the wordmark to see
+what changed.
 
 ---
 
@@ -708,6 +678,30 @@ In Firefox or Safari, export JSON there periodically instead. Only
 
 ---
 
+## Versioning
+
+The version sits beside the wordmark in both views. Click it for a plain-English
+changelog — it is in the application rather than only in the repository, because
+the same board can be opened from the hosted copy, a downloaded file and a
+folder, and those three can be different ages.
+
+**The major version is the schema version.** Not similar to it — the same
+number, and `tools/selftest.js` fails if they ever disagree. That makes the
+version answer the only question that can cost you anything: whether a file this
+copy wrote can be read by the copy on your other machine. Anything `1.x` reads
+anything else `1.x`.
+
+| | When it changes |
+|---|---|
+| **MAJOR** | The data format changed. `SCHEMA_VERSION` goes up, a migration is written in `model.js`, and this follows it. |
+| **MINOR** | Something you would notice using it: a new capability, a changed interaction, a reversed non-goal. |
+| **PATCH** | Fixes, wording, performance, docs. Nothing you would notice as a change in behaviour. |
+
+Every bump gets an entry at the top of [`js/changelog.js`](js/changelog.js),
+written for the person using Forefront rather than the person who wrote the
+commit. If an entry cannot be phrased as something you would notice, it belongs
+in the git history instead.
+
 ## Repository layout
 
 ```
@@ -721,7 +715,8 @@ forefront/
 │   ├── tokens.css        every colour, size and space, light and dark
 │   └── styles.css        components (no literal colours)
 ├── js/
-│   ├── constants.js      every tunable value
+│   ├── constants.js      every tunable value, and the version
+│   ├── changelog.js      what changed, in the user's words
 │   ├── theme.js          light / dark / match system
 │   ├── model.js          data shape, validation, migration — no DOM
 │   ├── storage.js        browser storage + connected file

@@ -523,6 +523,28 @@ kbd {
    Wordmark
    ================================================================== */
 
+/* Wordmark and version travel together, so each header still has two ends to
+   space apart rather than three things spread across it. */
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+/* The only place the application says which build you are looking at. Quiet,
+   but a real control — the same board can be opened from a hosted copy, a
+   downloaded file and a folder, and those can be different ages. */
+.version {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.version:hover { color: var(--accent-primary); }
+
 /* Sized to be read, not hunted for. This is the only thing on the page that
    says which application you are looking at, and at 11px in --text-muted it
    was quiet enough to disappear — which is the wrong kind of restraint for a
@@ -820,7 +842,7 @@ body[data-view="focus"] {
 
 /* ---- Footer counts ---- */
 
-.focus__footer {
+.app-footer {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -858,7 +880,7 @@ body[data-view="focus"] {
 }
 .count--zero .count__value { color: var(--text-faint); font-weight: var(--weight-normal); }
 
-.focus__actions {
+.app-footer__actions {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -1523,6 +1545,70 @@ body.is-dragging .card { cursor: grabbing; }
 /* ---- Import report ---- */
 
 .dialog--report { width: min(40rem, calc(100vw - 2rem)); }
+
+/* ---- Changelog ----
+   Released, newest first. Set as a list you skim rather than release notes you
+   read: the version is the anchor, the date is context, the entries are one
+   line each about something you would notice. */
+
+.dialog--changelog { width: min(38rem, calc(100vw - 2rem)); }
+
+.changelog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-height: 55vh;
+  overflow-y: auto;
+  margin-bottom: var(--space-5);
+  padding-right: var(--space-2);
+}
+
+.changelog__release { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.changelog__version {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--size-md);
+  font-weight: var(--weight-semi);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.changelog__date {
+  font-size: var(--size-xs);
+  font-weight: var(--weight-normal);
+  color: var(--text-faint);
+}
+
+/* Which one you are actually running. The reason the badge is clickable at all
+   is to answer that, so it is the one thing here allowed any colour. */
+.changelog__now {
+  margin-left: auto;
+  font-size: var(--size-xs);
+  font-weight: var(--weight-medium);
+  color: var(--accent-primary);
+}
+
+.changelog__changes { display: flex; flex-direction: column; gap: var(--space-2); }
+.changelog__changes li {
+  position: relative;
+  padding-left: var(--space-4);
+  font-size: var(--size-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+.changelog__changes li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 6px;
+  height: 1px;
+  background: var(--border-strong);
+}
 .report__lede { font-size: var(--size-sm); color: var(--text-secondary); margin-bottom: var(--space-4); }
 .report__block { margin-top: var(--space-4); }
 .report__heading {
@@ -1711,7 +1797,7 @@ body.is-dragging .card { cursor: grabbing; }
 
 /* Print: the board, on paper, without the chrome. */
 @media print {
-  .focus__capture, .board__actions, .card__done, .card__menu,
+  .focus__capture, .board__actions, .app-footer, .card__done, .card__menu,
   .banner-host, .toasts, .review-prompt__actions { display: none !important; }
   body { background: var(--bg-surface); }
   .card { break-inside: avoid; box-shadow: none; }
@@ -1775,6 +1861,28 @@ FF.C = {
   // ---- Data format -------------------------------------------------------
   APP_NAME: 'Forefront',
   SCHEMA_VERSION: 1,
+
+  /**
+   * The application version, shown beside the wordmark and opening the
+   * changelog when clicked.
+   *
+   * MAJOR is not merely "like" SCHEMA_VERSION — it IS SCHEMA_VERSION, and
+   * selftest.js fails if they ever disagree. That makes the version number
+   * answer the only question that can actually cost you anything: whether a
+   * file this version wrote can be read by the copy on your other machine.
+   * Anything 1.x reads anything else 1.x.
+   *
+   *   MAJOR  the data format changed. Bump SCHEMA_VERSION, write the
+   *          migration in model.js, and bump this to match.
+   *   MINOR  something you would notice while using it — a new capability, a
+   *          changed interaction, a reversed non-goal.
+   *   PATCH  fixes, wording, performance, docs. Nothing you would notice as a
+   *          change in behaviour.
+   *
+   * Every bump gets an entry at the top of js/changelog.js, written for the
+   * person using Forefront rather than the person who wrote the commit.
+   */
+  VERSION: '1.3',
 
   // ---- The numbers that shape the product --------------------------------
 
@@ -1900,6 +2008,71 @@ FF.LANE_BY_ID = FF.LANES.reduce(function (map, lane) {
  * without ever moving anything or hurting legibility.
  */
 FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
+  </script>
+  <script>
+// ===== js/changelog.js =====
+'use strict';
+
+/**
+ * Forefront — what changed, in the user's words.
+ *
+ * Kept here rather than in a CHANGELOG.md because the application has to be
+ * able to show it: there is no network, so it cannot fetch a file, and the
+ * version badge in the header opens this list directly.
+ *
+ * Write entries for the person using Forefront, not for whoever wrote the
+ * commit. "In Progress now holds three and refuses a fourth" — not "enforce
+ * FOCUS_COMMITMENTS in the action layer". If an entry cannot be phrased as
+ * something you would notice, it belongs in the git history and not here.
+ *
+ * Newest first. The top entry's version must equal C.VERSION; selftest.js
+ * checks that, along with the rule that the major version IS the schema
+ * version. See the versioning note in CLAUDE.md.
+ */
+
+(function (FF) {
+  FF.CHANGELOG = [
+    {
+      version: '1.3',
+      date: '2026-08-28',
+      changes: [
+        'The whole application is now available as a single file, for machines where nothing can be installed.',
+        'There is a hosted copy you can just open, which works in Safari and Firefox as well as Chrome.',
+        'Opening index.html without the folder it came from now explains itself instead of showing a blank page.',
+        'Install instructions rewritten — Forefront never needed a server, and used to imply it did.'
+      ]
+    },
+    {
+      version: '1.2',
+      date: '2026-08-27',
+      changes: [
+        'A cooler, calmer palette. The five weekly accents now all sit in a narrow blue-grey range.',
+        'In Progress holds three and refuses a fourth, naming what is in the way. It will not swap one out for you.',
+        'Just Do It sits beside your commitments in Focus, capped at five, so chores are to hand without becoming the page.',
+        'The wordmark and mark are larger, so it is obvious which application you are looking at.'
+      ]
+    },
+    {
+      version: '1.1',
+      date: '2026-08-26',
+      changes: [
+        'Light, dark, or match your system — from the header, or with T.',
+        'A mark of its own, beside the wordmark and on the browser tab.',
+        'Import understands what an assistant actually writes: comments, loose lane names, or a bare list of titles.',
+        'Export can annotate itself, so you can hand the format to an assistant along with your board.',
+        'Importing can add to your board instead of replacing it.'
+      ]
+    },
+    {
+      version: '1.0',
+      date: '2026-08-26',
+      changes: [
+        'Focus View, the board, Quick Capture, the Monday review and the Data panel.',
+        'Everything you have is in one JSON file you own, with an optional data file Forefront writes straight through to.'
+      ]
+    }
+  ];
+})(window.FF);
   </script>
   <script>
 // ===== js/theme.js =====
@@ -3845,7 +4018,26 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
   var PICKER_OPTS = {
     types: [{ description: 'Forefront data', accept: { 'application/json': ['.json'] } }],
     excludeAcceptAllOption: false,
-    multiple: false
+    multiple: false,
+
+    /**
+     * Where the file dialog opens.
+     *
+     * A page cannot point this at its own folder, and should not want to. It
+     * has no idea where it is on disk — a `file://` page knows its URL but the
+     * picker will not accept one — and putting the data beside the application
+     * is the wrong place anyway: next to a cloned repository it is one
+     * mistaken `git add` from being published, and next to a downloaded
+     * forefront.html it is next to a file you overwrite to update.
+     *
+     * So: `id` makes the browser remember whichever folder you chose last
+     * time, per picker, which is the behaviour people actually want after the
+     * first run. `startIn` only applies before there is one to remember, and
+     * Documents is a better first guess than Downloads. Both are quietly
+     * ignored by browsers that do not implement them.
+     */
+    id: 'forefront-data',
+    startIn: 'documents'
   };
 
   /** Probe IndexedDB once, and let anyone who needs the answer wait for it. */
@@ -3915,7 +4107,9 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
     }
     return window.showSaveFilePicker({
       suggestedName: C.DEFAULT_FILENAME,
-      types: PICKER_OPTS.types
+      types: PICKER_OPTS.types,
+      id: PICKER_OPTS.id,
+      startIn: PICKER_OPTS.startIn
     }).then(function (picked) {
       return picked.getFile().then(function (file) {
         return { ok: true, handle: picked, file: file, stamp: stampOf(file), fileName: file.name };
@@ -4656,13 +4850,69 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
     return button;
   }
 
+  /**
+   * The version badge that sits beside the wordmark in both views.
+   *
+   * Quiet enough to ignore and specific enough to be worth clicking: it is the
+   * only place the application says which build you are looking at, which
+   * matters now that the same board can be opened from a hosted copy, a single
+   * file and a folder that may all be different ages.
+   */
+  function versionTag(onSelect) {
+    return el('button', {
+      type: 'button',
+      class: 'version',
+      title: 'What changed in ' + FF.C.APP_NAME + ' ' + FF.C.VERSION,
+      'aria-label': FF.C.APP_NAME + ' version ' + FF.C.VERSION + ' — see what changed',
+      text: 'v' + FF.C.VERSION,
+      onclick: onSelect
+    });
+  }
+
+  /**
+   * The footer, identical in every view.
+   *
+   * It used to exist only in Focus, with the same controls duplicated into the
+   * top-right of the board — so Data and Shortcuts were in two different places
+   * depending on where you happened to be. They are utilities, not part of
+   * either view, and now they live in one place that does not move.
+   *
+   * The view-switch button is the only thing that differs, because it is the
+   * only thing that means something different in each place.
+   *
+   *   opts.leading   a node for the left-hand side (Focus puts lane counts there)
+   *   opts.primary   {label, onClick} — the view switch
+   */
+  function appFooter(actions, opts) {
+    opts = opts || {};
+
+    return el('footer', { class: 'app-footer' }, [
+      opts.leading || el('div', { class: 'app-footer__leading' }),
+      el('div', { class: 'app-footer__actions' }, [
+        opts.primary ? el('button', {
+          type: 'button', class: 'btn btn--ghost', text: opts.primary.label,
+          onclick: opts.primary.onClick
+        }) : null,
+        el('button', {
+          type: 'button', class: 'btn btn--faint', text: 'Data',
+          onclick: actions.openData
+        }),
+        el('button', {
+          type: 'button', class: 'btn btn--faint', text: 'Shortcuts',
+          onclick: actions.showHelp
+        }),
+        themeControl(actions.rerender)
+      ])
+    ]);
+  }
+
   function prefersReducedMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   FF.ui = {
     el: el, clear: clear, $: $, $$: $$,
-    svgNode: svgNode, icon: icon, themeControl: themeControl,
+    svgNode: svgNode, icon: icon, themeControl: themeControl, versionTag: versionTag, appFooter: appFooter,
     formatToday: formatToday, formatShort: formatShort, formatTime: formatTime,
     openDialog: openDialog, confirmDialog: confirmDialog, anyDialogOpen: anyDialogOpen,
     toast: toast, setBanner: setBanner, announce: announce,
@@ -5115,9 +5365,14 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
 
   function renderHeader(data, actions) {
     return el('header', { class: 'focus__header' }, [
-      el('p', { class: 'wordmark' }, [
-        ui.icon('mark', 'wordmark__mark'),
-        el('span', { text: 'Forefront' })
+      // Wordmark and version are one group so the header still has two ends to
+      // space apart, rather than three things spread across it.
+      el('div', { class: 'brand' }, [
+        el('p', { class: 'wordmark' }, [
+          ui.icon('mark', 'wordmark__mark'),
+          el('span', { text: 'Forefront' })
+        ]),
+        ui.versionTag(actions.showChangelog)
       ]),
       el('p', { class: 'focus__date', text: ui.formatToday() })
     ]);
@@ -5218,24 +5473,10 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
       ]);
     });
 
-    return el('footer', { class: 'focus__footer' }, [
-      el('div', { class: 'counts' }, lanes),
-      el('div', { class: 'focus__actions' }, [
-        el('button', {
-          type: 'button', class: 'btn btn--ghost', text: 'Show Board',
-          onclick: function () { actions.showBoard(); }
-        }),
-        el('button', {
-          type: 'button', class: 'btn btn--faint', text: 'Data',
-          onclick: actions.openData
-        }),
-        el('button', {
-          type: 'button', class: 'btn btn--faint', text: 'Shortcuts',
-          onclick: actions.showHelp
-        }),
-        ui.themeControl(actions.rerender)
-      ])
-    ]);
+    return ui.appFooter(actions, {
+      leading: el('div', { class: 'counts' }, lanes),
+      primary: { label: 'Show Board', onClick: function () { actions.showBoard(); } }
+    });
   }
 
   /**
@@ -5291,7 +5532,10 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
           FF.LANES.filter(function (l) { return l.id !== 'inbox'; })
                   .map(function (lane) { return renderLane(lane, data, counts, actions, options); })
         )
-      ])
+      ]),
+      ui.appFooter(actions, {
+        primary: { label: 'Focus', onClick: actions.showFocus }
+      })
     ]);
 
     return board;
@@ -5299,23 +5543,24 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
 
   function renderHeader(actions) {
     return el('header', { class: 'board__header' }, [
-      el('button', {
-        type: 'button', class: 'wordmark wordmark--button',
-        title: 'Back to Focus', 'aria-label': 'Back to Focus',
-        onclick: actions.showFocus
-      }, [
-        ui.icon('mark', 'wordmark__mark'),
-        el('span', { text: 'Forefront' })
+      el('div', { class: 'brand' }, [
+        el('button', {
+          type: 'button', class: 'wordmark wordmark--button',
+          title: 'Back to Focus', 'aria-label': 'Back to Focus',
+          onclick: actions.showFocus
+        }, [
+          ui.icon('mark', 'wordmark__mark'),
+          el('span', { text: 'Forefront' })
+        ]),
+        ui.versionTag(actions.showChangelog)
       ]),
+      // Only what you do FROM the board. Data, Shortcuts and the theme moved
+      // to the shared footer so they are in the same place in every view.
       el('div', { class: 'board__actions' }, [
         el('button', { type: 'button', class: 'btn btn--quiet', 'data-capture-trigger': '', onclick: actions.capture }, [
           el('span', { 'aria-hidden': 'true', text: '+ ' }),
           el('span', { text: 'Quick Capture' })
-        ]),
-        el('button', { type: 'button', class: 'btn btn--primary', text: 'Focus', onclick: actions.showFocus }),
-        el('button', { type: 'button', class: 'btn btn--faint', text: 'Data', onclick: actions.openData }),
-        el('button', { type: 'button', class: 'btn btn--faint', text: 'Shortcuts', onclick: actions.showHelp }),
-        ui.themeControl(actions.rerender)
+        ])
       ])
     ]);
   }
@@ -6749,7 +6994,7 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
       // what happened when the commitments moved one level down into
       // .focus__body and this still pointed at .focus__main.
       if (prompt) focusNode.insertBefore(prompt, focusNode.querySelector('.focus__body'));
-      if (indicator) focusNode.querySelector('.focus__actions').appendChild(indicator);
+      if (indicator) focusNode.querySelector('.app-footer__actions').appendChild(indicator);
       if (switched) focusNode.classList.add('view-enter');
       root.appendChild(focusNode);
     }
@@ -7274,6 +7519,51 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
     ui.toast('Theme: ' + FF.theme.describe(), 'info');
   }
 
+  /**
+   * What changed, from the version badge beside the wordmark.
+   *
+   * Worth having in the application rather than only in the repository: the
+   * same board can be opened from a hosted copy, a downloaded file and a
+   * folder, and those three can be different ages. The badge tells you which
+   * one you are looking at; this tells you what that means.
+   */
+  function showChangelog() {
+    ui.openDialog({
+      className: 'dialog--changelog',
+      labelledBy: 'changelog-title',
+      build: function (close) {
+        return el('div', { class: 'dialog__body' }, [
+          el('h2', { class: 'dialog__title', id: 'changelog-title',
+                     text: C.APP_NAME + ' ' + C.VERSION }),
+          el('p', { class: 'dialog__message', text:
+            'What has changed, newest first. Anything numbered ' +
+            C.SCHEMA_VERSION + '.x reads anything else numbered ' +
+            C.SCHEMA_VERSION + '.x, so your data moves between them freely.' }),
+
+          el('div', { class: 'changelog' }, FF.CHANGELOG.map(function (release, i) {
+            return el('section', { class: 'changelog__release' }, [
+              el('h3', { class: 'changelog__version' }, [
+                el('span', { text: release.version }),
+                el('span', { class: 'changelog__date', text: release.date }),
+                i === 0 ? el('span', { class: 'changelog__now', text: 'you have this' }) : null
+              ]),
+              el('ul', { class: 'changelog__changes' }, release.changes.map(function (change) {
+                return el('li', { text: change });
+              }))
+            ]);
+          })),
+
+          el('div', { class: 'dialog__actions' }, [
+            el('button', {
+              type: 'button', class: 'btn btn--primary', text: 'Close',
+              'data-autofocus': '', onclick: function () { close(); }
+            })
+          ])
+        ]);
+      }
+    });
+  }
+
   function showHelp() {
     var rows = [
       [C.CAPTURE_KEY_LABEL, 'Quick Capture'],
@@ -7384,6 +7674,7 @@ FF.ACCENT_FAMILIES = ['slate', 'steel', 'navy', 'stone', 'heather'];
     showFocus: showFocus,
     openData: openData,
     showHelp: showHelp,
+    showChangelog: showChangelog,
     startReview: startReview,
     deferReview: deferReview,
     skipReview: skipReview,

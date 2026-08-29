@@ -586,7 +586,26 @@
   var PICKER_OPTS = {
     types: [{ description: 'Forefront data', accept: { 'application/json': ['.json'] } }],
     excludeAcceptAllOption: false,
-    multiple: false
+    multiple: false,
+
+    /**
+     * Where the file dialog opens.
+     *
+     * A page cannot point this at its own folder, and should not want to. It
+     * has no idea where it is on disk — a `file://` page knows its URL but the
+     * picker will not accept one — and putting the data beside the application
+     * is the wrong place anyway: next to a cloned repository it is one
+     * mistaken `git add` from being published, and next to a downloaded
+     * forefront.html it is next to a file you overwrite to update.
+     *
+     * So: `id` makes the browser remember whichever folder you chose last
+     * time, per picker, which is the behaviour people actually want after the
+     * first run. `startIn` only applies before there is one to remember, and
+     * Documents is a better first guess than Downloads. Both are quietly
+     * ignored by browsers that do not implement them.
+     */
+    id: 'forefront-data',
+    startIn: 'documents'
   };
 
   /** Probe IndexedDB once, and let anyone who needs the answer wait for it. */
@@ -656,7 +675,9 @@
     }
     return window.showSaveFilePicker({
       suggestedName: C.DEFAULT_FILENAME,
-      types: PICKER_OPTS.types
+      types: PICKER_OPTS.types,
+      id: PICKER_OPTS.id,
+      startIn: PICKER_OPTS.startIn
     }).then(function (picked) {
       return picked.getFile().then(function (file) {
         return { ok: true, handle: picked, file: file, stamp: stampOf(file), fileName: file.name };

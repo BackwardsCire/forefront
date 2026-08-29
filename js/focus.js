@@ -122,9 +122,14 @@
 
   function renderHeader(data, actions) {
     return el('header', { class: 'focus__header' }, [
-      el('p', { class: 'wordmark' }, [
-        ui.icon('mark', 'wordmark__mark'),
-        el('span', { text: 'Forefront' })
+      // Wordmark and version are one group so the header still has two ends to
+      // space apart, rather than three things spread across it.
+      el('div', { class: 'brand' }, [
+        el('p', { class: 'wordmark' }, [
+          ui.icon('mark', 'wordmark__mark'),
+          el('span', { text: 'Forefront' })
+        ]),
+        ui.versionTag(actions.showChangelog)
       ]),
       el('p', { class: 'focus__date', text: ui.formatToday() })
     ]);
@@ -225,24 +230,10 @@
       ]);
     });
 
-    return el('footer', { class: 'focus__footer' }, [
-      el('div', { class: 'counts' }, lanes),
-      el('div', { class: 'focus__actions' }, [
-        el('button', {
-          type: 'button', class: 'btn btn--ghost', text: 'Show Board',
-          onclick: function () { actions.showBoard(); }
-        }),
-        el('button', {
-          type: 'button', class: 'btn btn--faint', text: 'Data',
-          onclick: actions.openData
-        }),
-        el('button', {
-          type: 'button', class: 'btn btn--faint', text: 'Shortcuts',
-          onclick: actions.showHelp
-        }),
-        ui.themeControl(actions.rerender)
-      ])
-    ]);
+    return ui.appFooter(actions, {
+      leading: el('div', { class: 'counts' }, lanes),
+      primary: { label: 'Show Board', onClick: function () { actions.showBoard(); } }
+    });
   }
 
   /**

@@ -344,7 +344,7 @@
       // what happened when the commitments moved one level down into
       // .focus__body and this still pointed at .focus__main.
       if (prompt) focusNode.insertBefore(prompt, focusNode.querySelector('.focus__body'));
-      if (indicator) focusNode.querySelector('.focus__actions').appendChild(indicator);
+      if (indicator) focusNode.querySelector('.app-footer__actions').appendChild(indicator);
       if (switched) focusNode.classList.add('view-enter');
       root.appendChild(focusNode);
     }
@@ -869,6 +869,51 @@
     ui.toast('Theme: ' + FF.theme.describe(), 'info');
   }
 
+  /**
+   * What changed, from the version badge beside the wordmark.
+   *
+   * Worth having in the application rather than only in the repository: the
+   * same board can be opened from a hosted copy, a downloaded file and a
+   * folder, and those three can be different ages. The badge tells you which
+   * one you are looking at; this tells you what that means.
+   */
+  function showChangelog() {
+    ui.openDialog({
+      className: 'dialog--changelog',
+      labelledBy: 'changelog-title',
+      build: function (close) {
+        return el('div', { class: 'dialog__body' }, [
+          el('h2', { class: 'dialog__title', id: 'changelog-title',
+                     text: C.APP_NAME + ' ' + C.VERSION }),
+          el('p', { class: 'dialog__message', text:
+            'What has changed, newest first. Anything numbered ' +
+            C.SCHEMA_VERSION + '.x reads anything else numbered ' +
+            C.SCHEMA_VERSION + '.x, so your data moves between them freely.' }),
+
+          el('div', { class: 'changelog' }, FF.CHANGELOG.map(function (release, i) {
+            return el('section', { class: 'changelog__release' }, [
+              el('h3', { class: 'changelog__version' }, [
+                el('span', { text: release.version }),
+                el('span', { class: 'changelog__date', text: release.date }),
+                i === 0 ? el('span', { class: 'changelog__now', text: 'you have this' }) : null
+              ]),
+              el('ul', { class: 'changelog__changes' }, release.changes.map(function (change) {
+                return el('li', { text: change });
+              }))
+            ]);
+          })),
+
+          el('div', { class: 'dialog__actions' }, [
+            el('button', {
+              type: 'button', class: 'btn btn--primary', text: 'Close',
+              'data-autofocus': '', onclick: function () { close(); }
+            })
+          ])
+        ]);
+      }
+    });
+  }
+
   function showHelp() {
     var rows = [
       [C.CAPTURE_KEY_LABEL, 'Quick Capture'],
@@ -979,6 +1024,7 @@
     showFocus: showFocus,
     openData: openData,
     showHelp: showHelp,
+    showChangelog: showChangelog,
     startReview: startReview,
     deferReview: deferReview,
     skipReview: skipReview,

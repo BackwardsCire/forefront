@@ -18,6 +18,28 @@ FF.C = {
   APP_NAME: 'Forefront',
   SCHEMA_VERSION: 1,
 
+  /**
+   * The application version, shown beside the wordmark and opening the
+   * changelog when clicked.
+   *
+   * MAJOR is not merely "like" SCHEMA_VERSION — it IS SCHEMA_VERSION, and
+   * selftest.js fails if they ever disagree. That makes the version number
+   * answer the only question that can actually cost you anything: whether a
+   * file this version wrote can be read by the copy on your other machine.
+   * Anything 1.x reads anything else 1.x.
+   *
+   *   MAJOR  the data format changed. Bump SCHEMA_VERSION, write the
+   *          migration in model.js, and bump this to match.
+   *   MINOR  something you would notice while using it — a new capability, a
+   *          changed interaction, a reversed non-goal.
+   *   PATCH  fixes, wording, performance, docs. Nothing you would notice as a
+   *          change in behaviour.
+   *
+   * Every bump gets an entry at the top of js/changelog.js, written for the
+   * person using Forefront rather than the person who wrote the commit.
+   */
+  VERSION: '1.3',
+
   // ---- The numbers that shape the product --------------------------------
 
   /** How many days a completed card stays visible in the Done lane.

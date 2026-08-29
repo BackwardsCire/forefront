@@ -37,7 +37,10 @@
           FF.LANES.filter(function (l) { return l.id !== 'inbox'; })
                   .map(function (lane) { return renderLane(lane, data, counts, actions, options); })
         )
-      ])
+      ]),
+      ui.appFooter(actions, {
+        primary: { label: 'Focus', onClick: actions.showFocus }
+      })
     ]);
 
     return board;
@@ -45,23 +48,24 @@
 
   function renderHeader(actions) {
     return el('header', { class: 'board__header' }, [
-      el('button', {
-        type: 'button', class: 'wordmark wordmark--button',
-        title: 'Back to Focus', 'aria-label': 'Back to Focus',
-        onclick: actions.showFocus
-      }, [
-        ui.icon('mark', 'wordmark__mark'),
-        el('span', { text: 'Forefront' })
+      el('div', { class: 'brand' }, [
+        el('button', {
+          type: 'button', class: 'wordmark wordmark--button',
+          title: 'Back to Focus', 'aria-label': 'Back to Focus',
+          onclick: actions.showFocus
+        }, [
+          ui.icon('mark', 'wordmark__mark'),
+          el('span', { text: 'Forefront' })
+        ]),
+        ui.versionTag(actions.showChangelog)
       ]),
+      // Only what you do FROM the board. Data, Shortcuts and the theme moved
+      // to the shared footer so they are in the same place in every view.
       el('div', { class: 'board__actions' }, [
         el('button', { type: 'button', class: 'btn btn--quiet', 'data-capture-trigger': '', onclick: actions.capture }, [
           el('span', { 'aria-hidden': 'true', text: '+ ' }),
           el('span', { text: 'Quick Capture' })
-        ]),
-        el('button', { type: 'button', class: 'btn btn--primary', text: 'Focus', onclick: actions.showFocus }),
-        el('button', { type: 'button', class: 'btn btn--faint', text: 'Data', onclick: actions.openData }),
-        el('button', { type: 'button', class: 'btn btn--faint', text: 'Shortcuts', onclick: actions.showHelp }),
-        ui.themeControl(actions.rerender)
+        ])
       ])
     ]);
   }

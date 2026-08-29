@@ -295,6 +295,36 @@ eq('annotate: same cards', readBack.data.cards.map(c => c.id), d.cards.map(c => 
 eq('annotate: same reviews', readBack.data.weeklyReviews.length, d.weeklyReviews.length);
 ok('annotate: carries the format guide', annotated.indexOf('// THE LANES') !== -1);
 
+// ---- version and changelog ----
+const V = FF.C.VERSION;
+ok('version: looks like MAJOR.MINOR', /^\d+\.\d+(\.\d+)?$/.test(V), 'got ' + V);
+
+// The rule that makes the number worth showing: MAJOR is not merely "like" the
+// schema version, it IS the schema version, so 1.x always reads 1.x.
+eq('version: major IS the schema version',
+   Number(V.split('.')[0]), FF.C.SCHEMA_VERSION);
+
+const log = FF.CHANGELOG;
+ok('changelog: has entries', Array.isArray(log) && log.length > 0);
+eq('changelog: newest entry is the running version', log[0].version, V);
+ok('changelog: every entry has a date and changes', log.every(r =>
+  /^\d{4}-\d{2}-\d{2}$/.test(r.date) && Array.isArray(r.changes) && r.changes.length > 0));
+ok('changelog: dates never go forwards as you go down', log.every((r, i) =>
+  i === 0 || log[i - 1].date >= r.date));
+ok('changelog: versions strictly descend', log.every((r, i) => {
+  if (i === 0) return true;
+  const a = log[i - 1].version.split('.').map(Number);
+  const b = r.version.split('.').map(Number);
+  for (let k = 0; k < Math.max(a.length, b.length); k++) {
+    if ((a[k] || 0) !== (b[k] || 0)) return (a[k] || 0) > (b[k] || 0);
+  }
+  return false;
+}));
+ok('changelog: no entry claims a major the schema cannot read',
+   log.every(r => Number(r.version.split('.')[0]) <= FF.C.SCHEMA_VERSION));
+ok('changelog: entries read as user-facing sentences',
+   log.every(r => r.changes.every(c => /^[A-Z]/.test(c) && /[.!?]$/.test(c))));
+
 // ---- round trip ----
 const rt = M.validateData(JSON.parse(M.serialize(d)));
 ok('roundtrip: valid', rt.ok);
