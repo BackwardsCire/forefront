@@ -671,6 +671,7 @@ In Firefox or Safari, export JSON there periodically instead. Only
 forefront/
 ├── index.html            application entry point, opened directly or served
 ├── forefront.html        generated: the whole app inlined into one file
+├── .nojekyll             tells GitHub Pages to serve the files as they are
 ├── assets/
 │   └── forefront-mark*   the mark, light and dark, for anything outside the app
 ├── css/

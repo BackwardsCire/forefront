@@ -86,5 +86,52 @@
   <script defer src="js/review.js"></script>
   <script defer src="js/data.js"></script>
   <script defer src="js/app.js"></script>
+
+  <!-- If css/ and js/ did not travel with this file, everything above is a
+       blank sheet with nothing visibly wrong in it: no error, no console
+       message a normal person will look at, just a white page. Copying
+       index.html on its own is the obvious thing to try and it fails silently,
+       so the file says what happened instead.
+
+       This cannot fire when the folder is intact — FF.app only exists once
+       js/app.js has run, and deferred scripts all execute before
+       DOMContentLoaded. In the built forefront.html everything is inlined, so
+       it never fires there either. -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Only the scripts are worth detecting. A missing css/ leaves a working
+      // but unstyled app, which is obvious on sight; a missing js/ leaves a
+      // blank page, which is not. Chrome also still reports a stylesheet
+      // object for a <link> that failed to load, so testing for that would be
+      // a check that quietly never fires.
+      if (window.FF && window.FF.app) return;
+
+      function line(text, style) {
+        var p = document.createElement('p');
+        p.textContent = text;
+        p.setAttribute('style', 'margin:0 0 14px;' + (style || ''));
+        return p;
+      }
+
+      var box = document.createElement('div');
+      box.setAttribute('style',
+        'max-width:34rem;margin:12vh auto;padding:28px 30px;border:1px solid #cad2e0;' +
+        'border-radius:8px;background:#fff;color:#1a2436;' +
+        'font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;');
+
+      box.appendChild(line('Forefront could not start.',
+        'font-size:21px;font-weight:600;margin-bottom:16px;'));
+      box.appendChild(line(
+        'This file needs the css and js folders that came with it, sitting beside ' +
+        'it in the same place. Copying index.html on its own does not bring them along.',
+        'color:#465369;'));
+      box.appendChild(line(
+        'Either copy the whole folder, or use forefront.html — that is the entire ' +
+        'application in a single file and needs nothing next to it.',
+        'color:#465369;margin-bottom:0;'));
+
+      document.body.replaceChildren(box);
+    });
+  </script>
 </body>
 </html>
