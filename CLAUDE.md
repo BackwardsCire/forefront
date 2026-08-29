@@ -90,7 +90,20 @@ js/focus.js       Focus View        js/board.js   Board View
 js/review.js      Monday ritual     js/data.js    Data panel
 js/app.js         shell: state, actions, keyboard, boot
 tools/            development only — never required to run the app
+.nojekyll         GitHub Pages serves the tree as-is rather than via Jekyll
 ```
+
+**There are four ways to run it, and they are all the same code.** The hosted
+copy at <https://backwardscire.github.io/forefront/> is Pages serving this
+branch's root; `forefront.html` is the generated single file; the folder is
+`index.html`; and the launchers add a localhost origin for Safari and Firefox.
+Nothing is branched or conditional per route — if a change works in one and not
+another, that is a bug, which is why the browser suite runs against both entry
+points.
+
+One consequence worth remembering when someone reports lost data: **browser
+storage is per origin**, so the hosted copy, a `file://` copy and the localhost
+copy each keep a separate board. A connected data file is what makes them one.
 
 **The theme is applied before the first paint**, by a small inline script at the
 top of `index.html` — the only non-deferred script in the app. Deferred scripts

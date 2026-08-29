@@ -20,10 +20,9 @@ what actually deserves your attention.
 
 It is HTML, CSS and JavaScript that runs entirely in your browser — there is no
 backend, no account, no external service, and no network request of any kind.
-It ships two ways: a folder you open, or [one self-contained
-`forefront.html`](forefront.html) you can drop anywhere and double-click.
-Firefox and Safari need a small static file server for their storage rules; see
-[Install](#install).
+Use it at **<https://backwardscire.github.io/forefront/>**, or download [one
+self-contained `forefront.html`](forefront.html) and double-click it, or take
+the folder. See [Install](#install).
 
 ---
 
@@ -89,6 +88,31 @@ that rather than assume it.
 
 Works in **Chrome and Edge**. For Firefox or Safari, see the launcher below.
 
+### The hosted copy — nothing to download at all
+
+**<https://backwardscire.github.io/forefront/>**
+
+The same application, served as a static page from GitHub Pages. Open it and
+use it; set it as your start page and you are done. It works in **every**
+browser including Safari and Firefox, because a real `https://` origin has none
+of the `file://` storage restrictions below.
+
+Your data still never leaves your machine. The page is delivered over the
+network; nothing it stores is. There is no backend to send anything to.
+
+Two things to know before choosing this route:
+
+- **It needs a connection to load.** Once open it keeps working, but this is
+  the one route that is not usable on a plane. The single file above is.
+- **Your board does not follow you between routes.** Browsers keep storage per
+  origin, so the hosted copy and a local file are separate buckets. If you use
+  both, connect the same data file in each (Chrome and Edge), or move the board
+  across with **Data → Download JSON** and **Import**.
+
+Corporate networks sometimes block `github.io` as an uncategorised or personal
+domain. If it does not load on your work machine, nothing is wrong with it —
+use `forefront.html`, which needs no network at all.
+
 ### The folder — best if you want to read or change it
 
 The green **Code** button → **Download ZIP**, then unzip it somewhere you
@@ -125,14 +149,19 @@ is "from an unidentified developer" — right-click → **Open** → **Open**, o
 
 ### Which route, in one table
 
-| | One file | Folder | Launcher |
-|---|---|---|---|
-| Anything to install | No | No | Node.js or Python 3 |
-| Anything left running | No | No | A terminal window |
-| Chrome / Edge | Yes | Yes | Yes |
-| Firefox / Safari | No | No | Yes |
-| Storage private to Forefront | With a data file | With a data file | Yes |
-| Good for editing the source | No | Yes | Yes |
+| | Hosted | One file | Folder | Launcher |
+|---|---|---|---|---|
+| Anything to download | No | One file | A ZIP | A ZIP |
+| Anything to install | No | No | No | Node.js or Python 3 |
+| Anything left running | No | No | No | A terminal window |
+| Chrome / Edge | Yes | Yes | Yes | Yes |
+| Firefox / Safari | Yes | No | No | Yes |
+| Works with no connection | No | Yes | Yes | Yes |
+| Storage private to Forefront | Yes | With a data file | With a data file | Yes |
+| Good for editing the source | No | No | Yes | Yes |
+
+If a corporate network blocks `github.io`, the one-file route is the fallback
+that needs nothing from the network.
 
 ### What you will see first
 
@@ -159,9 +188,10 @@ browsers do not expose Chrome's write-to-a-chosen-file API.
 
 ### Updating
 
-Download `forefront.html` again and overwrite it, or replace the folder. Your
-data is not inside either one — it is in browser storage or in the data file
-you chose — so there is nothing to migrate.
+The hosted copy updates itself. Otherwise download `forefront.html` again and
+overwrite it, or replace the folder. Your data is not inside any of them — it
+is in browser storage or in the data file you chose — so there is nothing to
+migrate.
 
 ---
 
