@@ -33,6 +33,40 @@ let runSeq = 0;
  * file is the same application, not a lookalike, so it is checked by running
  * the real suite rather than by eyeballing a screenshot of it.
  */
+
+/**
+ * The Monday the review scenarios run on, derived rather than pinned.
+ *
+ * tools/make-example.js dates the demo relative to today: it records reviews
+ * for the previous two Mondays and deliberately leaves the CURRENT week
+ * un-reviewed, so the prompt has something to offer. Hard-coding a literal
+ * Monday here meant these tests broke every time the fixture was regenerated —
+ * and regenerating it is a documented maintenance step, so they broke on a
+ * schedule rather than when something was actually wrong. Derive the date the
+ * same way the fixture does and the coupling goes away.
+ */
+function mondayOfThisWeek() {
+  const d = new Date();
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function localDateKey(d) {
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+const REVIEW_MONDAY = mondayOfThisWeek();
+const REVIEW_WEEK = localDateKey(REVIEW_MONDAY);
+const REVIEW_NOW = REVIEW_WEEK + 'T08:00:00';
+const SUNDAY_BEFORE = new Date(REVIEW_MONDAY.getFullYear(), REVIEW_MONDAY.getMonth(),
+                               REVIEW_MONDAY.getDate() - 1);
+const SUNDAY_NOW = localDateKey(SUNDAY_BEFORE) + 'T21:00:00';
+// Rebuilt inside the page so the browser's own locale formats it, not Node's.
+const DATE_IN_PAGE = d => `new Date(${d.getFullYear()}, ${d.getMonth()}, ${d.getDate()})` +
+  `.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })`;
+
 function chosenEntry() {
   const at = process.argv.indexOf('--entry');
   if (at !== -1 && process.argv[at + 1]) return process.argv[at + 1];
@@ -455,7 +489,7 @@ report('Monday review ritual', runPage(example, `
   await wait(140);
   ok('prompt gets out of the way', !document.querySelector('.review-prompt'));
   eq('a quiet indicator remains', text('.review-indicator'), 'Review pending');
-  const rec = data().weeklyReviews.find(r => r.weekOf === '2026-08-24');
+  const rec = data().weeklyReviews.find(r => r.weekOf === '${REVIEW_WEEK}');
   eq('the deferral is recorded in the data file, not just the browser', rec.deferrals.length, 1);
   eq('status is still pending', rec.status, 'pending');
 
@@ -508,21 +542,21 @@ report('Monday review ritual', runPage(example, `
   await until(() => document.querySelector('.focus'));
   ok('returns to Focus', !!document.querySelector('.focus'));
   ok('the backlog is gone again', all('.lane').length === 0);
-  const done = data().weeklyReviews.find(r => r.weekOf === '2026-08-24');
+  const done = data().weeklyReviews.find(r => r.weekOf === '${REVIEW_WEEK}');
   eq('review recorded as completed', done.status, 'completed');
   eq('commitments snapshotted', done.commitmentIds.length, 3);
   ok('completion time recorded', !!done.completedAt);
   ok('prompt does not come back', !document.querySelector('.review-prompt'));
   ok('no indicator either', !document.querySelector('.review-indicator'));
-`, { now: '2026-08-24T08:00:00' }));
+`, { now: REVIEW_NOW }));
 
 report('Skip this week', runPage(example, `
   click(all('.review-prompt__actions .btn')[2]); // Skip
   await wait(140);
-  const rec = data().weeklyReviews.find(r => r.weekOf === '2026-08-24');
+  const rec = data().weeklyReviews.find(r => r.weekOf === '${REVIEW_WEEK}');
   eq('recorded as an intentional skip', rec.status, 'skipped');
   ok('nothing left on screen', !document.querySelector('.review-prompt') && !document.querySelector('.review-indicator'));
-`, { now: '2026-08-24T08:00:00' }));
+`, { now: REVIEW_NOW }));
 
 report('Export carries the whole application state', runPage(example, `
   key(document.body, 'b');
@@ -896,20 +930,20 @@ report('Finishing and un-finishing', runPage(example, `
 `));
 
 report('A tab left open overnight catches up', runPage(example, `
-  eq('shows the day it was opened', text('.focus__date'), new Date(2026, 7, 23).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }));
+  eq('shows the day it was opened', text('.focus__date'), ${DATE_IN_PAGE(SUNDAY_BEFORE)});
   ok('Sunday offers no review', !document.querySelector('.review-prompt'));
   const ageBefore = text('.commitment__age');
 
   // Midnight passes while the tab sits there. Coming back to it must not show
   // yesterday's date, yesterday's ages, or miss Monday's review entirely.
-  window.__setNow('2026-08-24T08:00:00');
+  window.__setNow('${REVIEW_NOW}');
   document.dispatchEvent(new Event('visibilitychange'));
   await until(() => /Monday/.test(text('.focus__date') || ''), 'the date to roll over');
 
-  ok('the date has caught up', /Monday, August 24/.test(text('.focus__date')));
+  eq('the date has caught up', text('.focus__date'), ${DATE_IN_PAGE(REVIEW_MONDAY)});
   ok('the Monday review is now offered', !!document.querySelector('.review-prompt'));
   ok('and card ages moved on', text('.commitment__age') !== ageBefore);
-`, { now: '2026-08-23T21:00:00' }));
+`, { now: SUNDAY_NOW }));
 
 report('Persistence across a reload', runPage(example, `
   key(document.body, 'n');

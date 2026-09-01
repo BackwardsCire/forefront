@@ -103,6 +103,14 @@ Nothing is branched or conditional per route — if a change works in one and no
 another, that is a bug, which is why the browser suite runs against both entry
 points.
 
+They are **not four peer options**, and the README deliberately no longer
+presents them as such. Hosted and single-file cover almost everyone. The
+launcher exists for one case — Safari or Firefox when the hosted copy is
+unreachable — because Safari refuses browser storage to `file://` pages and
+would silently save nothing; the folder is for reading and changing the source.
+An earlier README listed all four as equals and a user reasonably concluded
+Forefront needed a server. Do not re-flatten that list.
+
 One consequence worth remembering when someone reports lost data: **browser
 storage is per origin**, so the hosted copy, a `file://` copy and the localhost
 copy each keep a separate board. A connected data file is what makes them one.
@@ -118,6 +126,15 @@ purpose, and the storage key is hard-coded in both. Keep them in step.
 `system`. That is what lets `tokens.css` carry one dark block instead of a
 second copy of the palette inside a `prefers-color-scheme` media query, which is
 how the two halves of a theme drift apart.
+
+**One footer, in every view.** `ui.appFooter()` builds it; Data, Shortcuts and
+the theme control live there and nowhere else. They used to be duplicated into
+the board's top-right, which put the same two utilities in two different places
+depending on which view you were in. The board header now holds only Quick
+Capture — what you do *from* the board — and the view-switch button is the only
+thing the footer varies. The weekly review indicator is appended to
+`.app-footer__actions`; that selector is what `app.js` looks for, so renaming it
+breaks the Monday prompt.
 
 **Focus View is two columns.** `.focus__body` is the grid; `.focus__main` holds
 the commitments and `.focus__aside` holds Just Do It. The weekly review prompt
@@ -306,6 +323,14 @@ cost real time to diagnose:
   input: drive `Input.dispatchKeyEvent` over the DevTools protocol.
 - **Headless matches `@media (hover: none)`**, so hover-revealed card controls
   render visible in screenshots. That is the touch variant, not the desktop one.
+- **Never pin a date the demo fixture generates.** `make-example.js` dates
+  `example.json` relative to today — reviews for the previous two Mondays, with
+  the current week deliberately left un-reviewed so the prompt has something to
+  offer. The review scenarios used to freeze `now` at a literal Monday, which
+  meant regenerating the fixture (a documented maintenance step, run whenever
+  the Done lane ages out) turned that Monday into an already-completed week and
+  five tests failed for no real reason. They now derive the Monday the same way
+  the fixture does. Any new test touching review dates must do the same.
 
 ```bash
 node tools/selftest.js        # model: ordering, ages, review logic, validation, import
